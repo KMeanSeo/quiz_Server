@@ -1,0 +1,21 @@
+Question,Answer
+Which layer corresponds to Layer 3 in the OSI model?,Network Layer
+What is the role of the transport layer in the TCP/IP model?,Ensures reliable data transmission
+What is the range of the first octet for Class A IP addresses?,1-126
+What is the default port number for the HTTP protocol?,80
+How is the subnet mask 255.255.255.0 represented in CIDR notation?,/24
+Which encryption method does WPA2 use in wireless networks?,AES
+What is the role of DNS?,Converts domain names to IP addresses
+Which OSI layer transmits data in bits?,Layer 1
+What cable type is commonly used for LAN transmissions?,Ethernet Cable
+Which network device connects network segments and finds optimal routes for data transmission?,Router
+What is the method called in packet-switched networks that sets up a logical connection between two devices for data transmission?,Virtual Circuit Switching
+What is the transmission method where one device sends data to multiple devices?,Multicast
+How many bits does an IPv6 address contain?,128 bits
+What address does a computer use to communicate with other devices over a network?,IP Address
+What is the main function of NAT (Network Address Translation)?,Translates private IP addresses to public IP addresses
+What application commonly uses the ICMP protocol?,Ping
+What is the role of the DHCP protocol?,Dynamically allocates IP addresses
+What is the primary function provided by VPNs?,Secure communication through encryption and tunneling
+Which main algorithm does a router use to determine the path?,Routing Algorithm
+What provides the method for devices connected via a router to communicate with each other?,Network Bridge
