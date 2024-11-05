@@ -1,0 +1,16 @@
+명령/응답	형식	설명
+클라이언트 요청		
+서버 연결 요청	CONNECT SERVER\n	서버에 연결을 요청
+퀴즈 요청	QUIZ REQUEST <NUMBER>\n	서버에 퀴즈와 문제 수를 요청
+정답 응답	ANSWER <USER_ANSWER> <QuestionCount>\n	특정 퀴즈에 대한 사용자 응답을 전송, 현재 몇 번째 문제인지 표시
+(현재 문제 수와 총 문제 수가 동일할 경우 총점을 반환 요청)
+서버 응답		
+연결 성공 및 문제 수 반환	200 Connection_Accepted <TotalQuestions>\n	서버 연결 성공, 전체 문제 수 반환
+퀴즈 요청 성공	201 Quiz_Content <QuestionCount> <NUMBER>\n	퀴즈 요청 성공, 현재 문제 번호와 전체 문제 수를 반환
+정답 응답 (정답)	202 Correct_Answer\n	정답 확인
+정답 응답 (오답)	203 Wrong_Answer\n	오답 확인
+총점 반환	204 Final_Score <TotalScore>\n	마지막 문제 제출 후, 전체 총점을 반환
+에러 코드		
+연결 실패	400 Connection_Failed\n	서버 연결 실패
+퀴즈 없음	404 Quiz_Not_Found\n	요청한 퀴즈가 없거나, NUMBER가 TotalQuestions보다 클 경우
+서버 오류	500 Server_Error\n	서버 내부 오류 발생
