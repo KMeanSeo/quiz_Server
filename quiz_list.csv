@@ -1,0 +1,50 @@
+What is the phenomenon where a text or image generation model creates information it was not trained on?,Hallucination
+What is the phenomenon where a model overfits to the training data and fails to generalize to new data?,Overfitting
+What is the technique that enables a machine to learn from data to solve specific problems on its own?,Machine Learning
+"What technique converts words into high-dimensional vectors representing their meanings, with Word2Vec and GloVe as examples?",Word Embedding
+What neural network structure is commonly used to encode the order of words in sentences?,RNN
+"What is the abbreviation for a regular expression, used to find specific patterns in text?",Regex
+What function is often used as an activation function in neural networks to increase model non-linearity?,ReLU
+What is the structure in computer vision that detects the location and size of objects?,Bounding Box
+What is the process of labeling each pixel in an image to separate different objects?,Segmentation
+What is a training unit in deep learning where all weights are updated after a single pass?,Epoch
+What mechanism in NLP helps encode word relationships by focusing on relevant parts of sentences?,Attention
+What allows a Transformer model to learn relationships within sentences through self-attention?,Self-Attention
+What technique turns words into numerical vectors for semantic comparison?,Embedding
+What process converts images into low-dimensional feature vectors for model input?,Feature Extraction
+What is the phenomenon where the same word has different meanings depending on context in NLP?,Polysemy
+What tree structure is used to analyze the grammatical structure of a sentence?,Parse Tree
+What technique helps improve model performance by reducing randomness in learning?,Batch Normalization
+What type of neural network has multiple layers to learn data deeply?,Deep Learning
+What technique in computer vision reduces dimension while preserving information?,Pooling
+What metric in machine learning helps determine the ratio of positive and negative classes?,Decision Boundary
+"What metric measures similarity between two images, often used in image processing?",MSE
+What process in NLP turns words into high-dimensional vectors for context representation?,Embedding
+"What defines the hierarchical structure of a model, determining information flow through layers?",Feedforward Network
+What filtering technique in computer vision identifies image boundaries and features?,Edge Detection
+What language model is designed to learn word correlations within sentences?,BERT
+What technique clusters similar words to be located close in vector space?,Word Clustering
+What process in NLP distinguishes sentence components and represents them as a tree?,Parsing
+What computer vision algorithm learns unique patterns or features in images?,CNN
+What technique in NLP solves the issue of different word meanings depending on context?,Contextual Embedding
+What variable-size filter is used in CNNs to handle data of various dimensions?,Kernel
+What validation method splits data by specific attributes into training and testing sets?,Cross-Validation
+"What process analyzes color, contours, and texture in an image to extract information?",Image Analysis
+What process augments data for model optimization without affecting output?,Data Augmentation
+What subword tokenization method is used in NLP for breaking text into smaller units?,BPE
+What technique creates word embedding distances to represent semantic relationships?,Embedding Distance
+What metric is often used in binary classification when precision and recall are key?,F1 Score
+What process resizes images to be compatible with varying model input requirements?,Resize
+What algorithm detects and recognizes objects by separating them in an image?,Object Detection
+What method in NLP extracts important words from a sentence as keywords?,Keyword Extraction
+What problem occurs when words with the same meaning appear in different contexts?,Context Misalignment
+What is the boundary that defines the decision rule in classification?,Decision Boundary
+What metrics measure positive and negative prediction accuracy in image classification?,Precision and Recall
+What is the method of handling repeated words in a sentence based on their context?,Context Awareness
+What is the NLP technique of rewriting a sentence while preserving core information?,Paraphrasing
+What is the process of converting words into numeric form in NLP?,Tokenizing
+What technique adjusts model training to prevent excessive focus on certain samples?,Regularization
+What is the first layer in CNN that detects important features in images?,Convolution Layer
+What NLP technique summarizes sentences to retain core information?,Text Summarization
+What process optimizes model performance by adjusting user-defined parameters?,Hyperparameter Tuning
+What is the process of training a pre-trained NLP model on specific tasks?,Fine-Tuning
