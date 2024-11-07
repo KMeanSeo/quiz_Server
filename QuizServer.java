@@ -3,7 +3,6 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
 
 public class QuizServer {
     private static final int MAX_QUESTIONS = 10; // Set the maximum number of questions per client
@@ -13,7 +12,9 @@ public class QuizServer {
     public static void main(String[] args) throws Exception {
         ServerSocket listener = new ServerSocket(7777);
         System.out.println("The quiz server is running...\n");
-        ExecutorService pool = Executors.newFixedThreadPool(1);
+
+        // 스레드 풀 크기를 20으로 설정하여 멀티스레딩 기능 추가
+        ExecutorService pool = Executors.newFixedThreadPool(20);
 
         String filePath = "quiz_list.csv";
         quizList = NetworkQuiz.loadQuiz(filePath);
@@ -22,18 +23,7 @@ public class QuizServer {
 
         while (true) {
             Socket sock = listener.accept();
-            try {
-                pool.execute(new QuizHandler(sock));
-            } catch (RejectedExecutionException e) {
-                System.out.println("Thread limit exceeded, unable to handle new connections.\n");
-                try (PrintWriter out = new PrintWriter(sock.getOutputStream(), true)) {
-                    out.println("503|Service_Unavailable");
-                } catch (IOException ex) {
-                    System.out.println("Error sending service unavailable message to client: " + ex.getMessage() + "\n");
-                } finally {
-                    sock.close();
-                }
-            }
+            pool.execute(new QuizHandler(sock));
         }
     }
 
@@ -56,7 +46,7 @@ public class QuizServer {
         public void run() {
             System.out.println("Connected: " + socket + "\n");
             try (Scanner in = new Scanner(socket.getInputStream());
-                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
                 while (in.hasNextLine()) {
                     String request = in.nextLine();
@@ -93,7 +83,7 @@ public class QuizServer {
             // Check if all questions have been asked
             if (currentQuestionIndex >= selectedQuestions.size()) {
                 int totalScore = calculateScore();
-                out.println("204|Final_Score|" + totalScore);  // Send final score if no more questions
+                out.println("204|Final_Score|" + totalScore); // Send final score if no more questions
                 return;
             }
 
@@ -126,7 +116,7 @@ public class QuizServer {
                 int totalScore = calculateScore();
                 out.println("204|Final_Score|" + totalScore);
                 try {
-                    socket.close();  // Close the connection after sending final score
+                    socket.close(); // Close the connection after sending final score
                 } catch (IOException e) {
                     System.out.println("Error closing socket after sending final score: " + e.getMessage());
                 }
@@ -144,10 +134,11 @@ public class QuizServer {
         }
 
         private boolean isCorrectAnswer(String userAnswer, String correctAnswer) {
-            // Normalize user answer and correct answer by trimming and converting to lowercase
+            // Normalize user answer and correct answer by trimming and converting to
+            // lowercase
             String normalizedUserAnswer = userAnswer.trim().toLowerCase();
             String normalizedCorrectAnswer = correctAnswer.trim().toLowerCase();
-        
+
             // Check if normalized answers are equal
             return normalizedUserAnswer.equals(normalizedCorrectAnswer);
         }
