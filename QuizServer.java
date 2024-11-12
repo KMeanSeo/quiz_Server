@@ -1,188 +1,144 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class QuizServer {
-    private static final int MAX_QUESTIONS = 10; 
-    private static int TOTAL_QUESTIONS;
-    private static List<String[]> quizList;
+    // Port number the server will listen on
+    private static final int PORT = 7777;
 
-    public static void main(String[] args) throws Exception {
-        ServerSocket listener = new ServerSocket(7777);
-        System.out.println("The quiz server is running...\n");
+    // Server socket to accept client connections
+    private ServerSocket serverSocket;
 
-        ExecutorService pool = Executors.newFixedThreadPool(20);
+    // List to hold all connected clients
+    private List<ClientHandler> clients = new ArrayList<>();
 
-        String filePath = "quiz_list.csv";
-        quizList = NetworkQuiz.loadQuiz(filePath);
-        TOTAL_QUESTIONS = quizList.size();
-        System.out.println("Total Questions Loaded: " + TOTAL_QUESTIONS + "\n");
+    // GUI for the server to monitor client status and scores
+    private QuizServerGUI serverGUI;
 
+    // Constructor to initialize the server socket and GUI
+    public QuizServer() throws IOException {
+        // Create server socket to listen on the specified port
+        serverSocket = new ServerSocket(PORT);
+
+        // Initialize the server's GUI
+        serverGUI = new QuizServerGUI(this);
+
+        // Make the server GUI visible
+        serverGUI.setVisible(true);
+    }
+
+    // Method to start accepting client connections and handle them
+    public void start() {
+        System.out.println("Quiz Server started...");
         while (true) {
-            Socket sock = listener.accept();
-            pool.execute(new QuizHandler(sock));
+            try {
+                // Accept a new client connection
+                Socket clientSocket = serverSocket.accept();
+
+                // Create a ClientHandler to manage communication with the client
+                ClientHandler clientHandler = new ClientHandler(clientSocket, this);
+
+                // Add the client handler to the list of clients
+                clients.add(clientHandler);
+
+                // Start a new thread for the client handler
+                new Thread(clientHandler).start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private static class QuizHandler implements Runnable {
+    // Method to update client status in the GUI
+    public synchronized void updateClientStatus(String clientId, String status) {
+        serverGUI.updateClientStatus(clientId, status);
+    }
+
+    // Method to update client score in the GUI
+    public synchronized void updateClientScore(String clientId, int score) {
+        serverGUI.updateClientScore(clientId, score);
+    }
+
+    // Main method to start the server
+    public static void main(String[] args) {
+        try {
+            // Create and start the QuizServer
+            QuizServer server = new QuizServer();
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ClientHandler class to handle communication with each client
+    private class ClientHandler implements Runnable {
         private Socket socket;
-        private List<String[]> selectedQuestions;
-        private int currentQuestionIndex = 0; 
-        private int correctAnswersCount = 0;
-        private int currentScore = 0; 
+        private BufferedReader in;
+        private PrintWriter out;
+        private String clientId;
+        private int score;
+        private QuizServer server;
 
-        private final int pointsPerQuestion = 100 / MAX_QUESTIONS;
-
-        QuizHandler(Socket socket) {
+        // Constructor to initialize the client handler with socket and server reference
+        public ClientHandler(Socket socket, QuizServer server) throws IOException {
             this.socket = socket;
-            this.selectedQuestions = getRandomQuestions(MAX_QUESTIONS); 
+            this.server = server;
+
+            // Set up input and output streams for communication with the client
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+
+            // Generate a unique client ID for this client
+            clientId = UUID.randomUUID().toString();
+
+            // Initialize score to 0
+            score = 0;
         }
 
+        // Method that runs on a separate thread to handle client communication
         @Override
         public void run() {
-            System.out.println("Connected: " + socket + "\n");
-            try (Scanner in = new Scanner(socket.getInputStream());
-                    PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+            try {
+                // Update client status to "Connected" in the server GUI
+                server.updateClientStatus(clientId, "Connected");
 
-                while (in.hasNextLine()) {
-                    String request = in.nextLine();
-                    System.out.println("Received: " + request + "\n");
-
-                    if (request.equals("CONNECT|SERVER")) {
-                        handleConnect(out);
-                    } else if (request.startsWith("QUIZ|REQUEST")) {
-                        handleQuizRequest(out);
-                    } else if (request.startsWith("ANSWER|")) {
-                        handleAnswer(request, out);
-                    } else {
-                        String response = "400|Connection_Failed";
-                        out.println(response);
-                        System.out.println("Sent: " + response + "\n");
+                String request;
+                // Listen for incoming requests from the client
+                while ((request = in.readLine()) != null) {
+                    if (request.startsWith("ANSWER|")) {
+                        // Process the answer and update the score
+                        boolean correct = processAnswer(request.substring(7));
+                        if (correct) {
+                            score++; // Increment score if answer is correct
+                            out.println("202|Correct_Answer");
+                        } else {
+                            out.println("203|Wrong_Answer");
+                        }
+                        // Update the client score in the GUI
+                        server.updateClientScore(clientId, score);
+                    } else if (request.equals("QUIZ|REQUEST")) {
+                        // Send a quiz question to the client
+                        out.println("201|Quiz_Content|Sample Question|1/10");
                     }
                 }
-            } catch (Exception e) {
-                System.out.println("Error handling client request: " + e.getMessage() + "\n");
+            } catch (IOException e) {
+                e.printStackTrace();
             } finally {
                 try {
+                    // Close the socket connection
                     socket.close();
                 } catch (IOException e) {
-                    System.out.println("Error closing socket: " + e.getMessage() + "\n");
+                    e.printStackTrace();
                 }
-                System.out.println("Closed: " + socket + "\n");
+                // Update client status to "Disconnected" in the server GUI
+                server.updateClientStatus(clientId, "Disconnected");
             }
         }
 
-        private void handleConnect(PrintWriter out) throws IOException {
-            String response = "200|Connection_Accepted|" + MAX_QUESTIONS;
-            out.println(response);
-            System.out.println("Sent: " + response + "\n");
+        // Method to process the client's answer
+        private boolean processAnswer(String answer) {
+            // For simplicity, we assume the correct answer is "correct"
+            return "correct".equalsIgnoreCase(answer);
         }
-
-        private void handleQuizRequest(PrintWriter out) {
-            if (currentQuestionIndex >= selectedQuestions.size()) {
-                int totalScore = calculateScore();
-                String response = "204|Final_Score|" + totalScore;
-                out.println(response);
-                System.out.println("Sent: " + response + "\n");
-                return;
-            }
-
-            String[] quiz = selectedQuestions.get(currentQuestionIndex);
-            currentQuestionIndex++;
-            String response = "201|Quiz_Content|" + quiz[0] + "|" + currentQuestionIndex + "/" + MAX_QUESTIONS;
-            out.println(response);
-            System.out.println("Sent: " + response + "\n");
-        }
-
-        private void handleAnswer(String request, PrintWriter out) {
-            String[] parts = request.split("\\|", 2);
-            if (parts.length < 2) {
-                String response = "400|Connection_Failed";
-                out.println(response);
-                System.out.println("Sent: " + response + "\n");
-                return;
-            }
-
-            String userAnswer = parts[1];
-            String correctAnswer = selectedQuestions.get(currentQuestionIndex - 1)[1];
-
-            String response;
-            if (isCorrectAnswer(userAnswer, correctAnswer)) {
-                correctAnswersCount++;
-                currentScore += pointsPerQuestion; 
-                response = "202|Correct_Answer|Score:" + currentScore;
-            } else {
-                response = "203|Wrong_Answer|Score:" + currentScore;
-            }
-
-            out.println(response);
-            System.out.println("Sent: " + response + "\n");
-
-            if (currentQuestionIndex == MAX_QUESTIONS) {
-                int totalScore = calculateScore();
-                response = "204|Final_Score|" + totalScore;
-                out.println(response);
-                System.out.println("Sent: " + response + "\n");
-                try {
-                    socket.close(); 
-                } catch (IOException e) {
-                    System.out.println("Error closing socket after sending final score: " + e.getMessage());
-                }
-            }
-        }
-
-        private int calculateScore() {
-            return currentScore;
-        }
-
-        private List<String[]> getRandomQuestions(int numQuestions) {
-            List<String[]> randomQuestions = new ArrayList<>(quizList);
-            Collections.shuffle(randomQuestions);
-            return randomQuestions.subList(0, Math.min(numQuestions, randomQuestions.size()));
-        }
-
-        private boolean isCorrectAnswer(String userAnswer, String correctAnswer) {
-            String normalizedUserAnswer = userAnswer.trim().toLowerCase();
-            String normalizedCorrectAnswer = correctAnswer.trim().toLowerCase();
-            return normalizedUserAnswer.equals(normalizedCorrectAnswer);
-        }
-    }
-}
-
-class NetworkQuiz {
-    public static List<String[]> loadQuiz(String filePath) {
-        List<String[]> quizList = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] quiz = parseCSVLine(line);
-                if (quiz.length >= 2) {
-                    quizList.add(quiz);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error loading quiz file: " + e.getMessage() + "\n");
-        }
-        return quizList;
-    }
-
-    private static String[] parseCSVLine(String line) {
-        List<String> values = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean inQuotes = false;
-        for (char ch : line.toCharArray()) {
-            if (ch == '"') {
-                inQuotes = !inQuotes;
-            } else if (ch == ',' && !inQuotes) {
-                values.add(current.toString().trim());
-                current.setLength(0);
-            } else {
-                current.append(ch);
-            }
-        }
-        values.add(current.toString().trim());
-        return values.toArray(new String[0]);
     }
 }
