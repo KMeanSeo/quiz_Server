@@ -1,6 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,9 +7,11 @@ public class QuizServerGUI extends JFrame {
     // Text area to display general server status or messages
     private JTextArea statusArea;
 
-    // Maps to store labels for client status and client score based on client ID
+    // Maps to store labels for client status, score, and progress based on client
+    // ID
     private Map<String, JLabel> clientStatusLabels;
     private Map<String, JLabel> clientScoreLabels;
+    private Map<String, JLabel> clientProgressLabels;
 
     // Panel to display client information
     private JPanel clientPanel;
@@ -19,46 +20,50 @@ public class QuizServerGUI extends JFrame {
     public QuizServerGUI(QuizServer server) {
         // Set window title, size, and default close operation
         setTitle("Quiz Server Monitor");
-        setSize(600, 400);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Initialize the maps to hold client status and score labels
+        // Initialize the maps to hold client status, score, and progress labels
         clientStatusLabels = new HashMap<>();
         clientScoreLabels = new HashMap<>();
+        clientProgressLabels = new HashMap<>();
 
         // Initialize the text area to display server messages
         statusArea = new JTextArea();
         statusArea.setEditable(false); // Make the text area non-editable
         add(new JScrollPane(statusArea), BorderLayout.CENTER); // Add text area to the center of the window
 
-        // Create a panel for displaying client statuses and scores
+        // Create a panel for displaying client statuses, scores, and progress
         clientPanel = new JPanel();
-        clientPanel.setLayout(new GridLayout(0, 3, 10, 10)); // 3 columns: Client ID, Status, Score
+        clientPanel.setLayout(new GridLayout(0, 4, 10, 10)); // 4 columns: Client ID, Status, Score, Progress
         add(new JScrollPane(clientPanel), BorderLayout.SOUTH); // Add panel to the bottom of the window
     }
 
-    // Method to add a new client to the GUI (with client ID, status, and score
-    // labels)
-    public void addClient(String clientId) {
+    // Method to add a new client to the GUI (with client ID, status, score, and
+    // progress labels)
+    public void addClient(String clientId, int totalQuestions) {
         if (clientStatusLabels.containsKey(clientId)) {
             // If client already exists, no need to add again
             return;
         }
 
-        // Create labels for client status and score
+        // Create labels for client status, score, and progress
         JLabel idLabel = new JLabel(clientId);
         JLabel statusLabel = new JLabel("Status: Connected");
         JLabel scoreLabel = new JLabel("Score: 0");
+        JLabel progressLabel = new JLabel("Progress: 0/" + totalQuestions);
 
         // Store the labels in their respective maps, using client ID as the key
         clientStatusLabels.put(clientId, statusLabel);
         clientScoreLabels.put(clientId, scoreLabel);
+        clientProgressLabels.put(clientId, progressLabel);
 
-        // Add the client ID, status label, and score label to the panel
+        // Add the client ID, status label, score label, and progress label to the panel
         clientPanel.add(idLabel);
         clientPanel.add(statusLabel);
         clientPanel.add(scoreLabel);
+        clientPanel.add(progressLabel);
 
         // Refresh the layout to display the new client
         clientPanel.revalidate();
@@ -67,32 +72,30 @@ public class QuizServerGUI extends JFrame {
 
     // Method to update the status of a client in the GUI
     public void updateClientStatus(String clientId, String status) {
-        // Ensure thread safety when updating the GUI
         SwingUtilities.invokeLater(() -> {
             JLabel statusLabel = clientStatusLabels.get(clientId);
             if (statusLabel != null) {
-                // Update the status label if client already exists
                 statusLabel.setText("Status: " + status);
-            } else {
-                // Add the client if it doesn't exist in the map
-                addClient(clientId);
-                clientStatusLabels.get(clientId).setText("Status: " + status);
             }
         });
     }
 
     // Method to update the score of a client in the GUI
     public void updateClientScore(String clientId, int score) {
-        // Ensure thread safety when updating the GUI
         SwingUtilities.invokeLater(() -> {
             JLabel scoreLabel = clientScoreLabels.get(clientId);
             if (scoreLabel != null) {
-                // Update the score label if client already exists
                 scoreLabel.setText("Score: " + score);
-            } else {
-                // Add the client if it doesn't exist in the map
-                addClient(clientId);
-                clientScoreLabels.get(clientId).setText("Score: " + score);
+            }
+        });
+    }
+
+    // Method to update the progress of a client in the GUI
+    public void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
+        SwingUtilities.invokeLater(() -> {
+            JLabel progressLabel = clientProgressLabels.get(clientId);
+            if (progressLabel != null) {
+                progressLabel.setText("Progress: " + currentQuestion + "/" + totalQuestions);
             }
         });
     }
@@ -102,24 +105,6 @@ public class QuizServerGUI extends JFrame {
         SwingUtilities.invokeLater(() -> {
             statusArea.append(message + "\n");
             statusArea.setCaretPosition(statusArea.getDocument().getLength()); // Auto-scroll
-        });
-    }
-
-    // Main method to launch the server and GUI
-    public static void main(String[] args) {
-        // Run the server and GUI initialization on the Event Dispatch Thread
-        SwingUtilities.invokeLater(() -> {
-            QuizServer server = null;
-            try {
-                // Initialize and start the QuizServer
-                server = new QuizServer();
-                server.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            // Initialize and display the server GUI
-            QuizServerGUI serverGUI = new QuizServerGUI(server);
-            serverGUI.setVisible(true);
         });
     }
 }

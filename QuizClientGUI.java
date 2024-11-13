@@ -184,9 +184,10 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
-    // Method to display error messages in a dialog box
+    // Method to display error messages in a dialog box and exit on confirmation
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        System.exit(0); // Close the program after showing the error message
     }
 
     // Listener for the "Submit Answer" button
