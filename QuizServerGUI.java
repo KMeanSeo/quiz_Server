@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -105,6 +106,23 @@ public class QuizServerGUI extends JFrame {
         SwingUtilities.invokeLater(() -> {
             statusArea.append(message + "\n");
             statusArea.setCaretPosition(statusArea.getDocument().getLength()); // Auto-scroll
+        });
+    }
+
+    // Main method to launch the server and GUI
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            QuizServer server = null;
+            try {
+                // Initialize and start the QuizServer
+                server = new QuizServer();
+                server.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // Initialize and display the server GUI
+            QuizServerGUI serverGUI = new QuizServerGUI(server);
+            serverGUI.setVisible(true);
         });
     }
 }
