@@ -10,6 +10,7 @@ public class QuizClientGUI extends JFrame {
     private JTextField inputField;
     private JButton submitButton;
     private JLabel questionNumberLabel;
+    private JProgressBar progressBar; // Progress bar for tracking quiz progress
 
     // Instance of the QuizClient class to handle server communication
     private QuizClient quizClient;
@@ -22,7 +23,7 @@ public class QuizClientGUI extends JFrame {
     public QuizClientGUI() {
         // Set window title, size, and default close operation
         setTitle("Quiz Client");
-        setSize(400, 300);
+        setSize(400, 350);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -50,6 +51,11 @@ public class QuizClientGUI extends JFrame {
         questionNumberLabel = new JLabel("Question: 0/0");
         inputPanel.add(questionNumberLabel, BorderLayout.NORTH);
 
+        // Progress bar to show quiz progress
+        progressBar = new JProgressBar(0, 10); // Default total questions
+        progressBar.setStringPainted(true);
+        inputPanel.add(progressBar, BorderLayout.SOUTH);
+
         // Add input panel to the bottom of the frame
         add(inputPanel, BorderLayout.SOUTH);
 
@@ -69,6 +75,7 @@ public class QuizClientGUI extends JFrame {
                 inputField.setEnabled(true);
                 submitButton.setEnabled(true);
                 totalQuestions = Integer.parseInt(connectResponse.split("\\|")[2]);
+                progressBar.setMaximum(totalQuestions); // Set progress bar max to total questions
                 requestQuiz();
             } else {
                 // If connection is not accepted, disable input and submit button
@@ -133,20 +140,27 @@ public class QuizClientGUI extends JFrame {
             String question = parts[2];
             currentQuestionNumber = Integer.parseInt(parts[3].split("/")[0]);
             chatArea.append("Question: " + question + "\n");
+
+            // Update question number label and progress bar
             questionNumberLabel.setText("Question: " + currentQuestionNumber + "/" + totalQuestions);
+            progressBar.setValue(currentQuestionNumber);
+
         } else if (response.startsWith("202|Correct_Answer")) {
             // If the answer is correct, display a message and request the next quiz
             chatArea.append("Server: Correct Answer!\n\n");
             requestQuiz();
+
         } else if (response.startsWith("203|Wrong_Answer")) {
             // If the answer is wrong, display a message and request the next quiz
             chatArea.append("Server: Wrong Answer.\n\n");
             requestQuiz();
+
         } else if (response.startsWith("204|Final_Score")) {
             // If the quiz is finished, show the final score and exit prompt
             chatArea.append("Server: Quiz finished. Final Score: " + response.split("\\|")[2] + "\n\n");
             submitButton.setEnabled(false);
             inputField.setEnabled(false);
+            progressBar.setValue(totalQuestions); // Complete progress bar
 
             // Show final score and ask if the user wants to exit
             String score = response.split("\\|")[2];

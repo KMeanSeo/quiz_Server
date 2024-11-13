@@ -5,7 +5,7 @@ import java.util.*;
 public class QuizServer {
     // Port number the server will listen on
     private static final int PORT = 7777;
-    private static final String QUIZ_FILE = "quiz_questions.csv"; // CSV 파일 경로
+    private static final String QUIZ_FILE = "quiz_list.csv"; // CSV 파일 경로
 
     // Server socket to accept client connections
     private ServerSocket serverSocket;
@@ -41,7 +41,7 @@ public class QuizServer {
             try {
                 // Accept a new client connection
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connection accepted."); // 로그 추가
+                System.out.println("New client connection accepted.");
 
                 // Create a ClientHandler to manage communication with the client
                 ClientHandler clientHandler = new ClientHandler(clientSocket, this);
@@ -75,12 +75,11 @@ public class QuizServer {
         }
     }
 
-    // Method to get a random quiz question
-    private QuizQuestion getRandomQuestion() {
-        if (quizQuestions.isEmpty())
-            return null;
-        Random random = new Random();
-        return quizQuestions.get(random.nextInt(quizQuestions.size()));
+    // Method to get a list of 10 random quiz questions
+    private List<QuizQuestion> getRandomQuestions(int count) {
+        List<QuizQuestion> questions = new ArrayList<>(quizQuestions);
+        Collections.shuffle(questions);
+        return questions.subList(0, Math.min(count, questions.size()));
     }
 
     // Method to update client status in the GUI
@@ -112,7 +111,8 @@ public class QuizServer {
         private String clientId;
         private int score;
         private QuizServer server;
-        private QuizQuestion currentQuestion;
+        private List<QuizQuestion> selectedQuestions;
+        private int currentQuestionIndex = 0;
 
         // Constructor to initialize the client handler with socket and server reference
         public ClientHandler(Socket socket, QuizServer server) throws IOException {
@@ -128,6 +128,9 @@ public class QuizServer {
 
             // Initialize score to 0
             score = 0;
+
+            // Select 10 random quiz questions for this client
+            selectedQuestions = server.getRandomQuestions(10);
         }
 
         // Method that runs on a separate thread to handle client communication
@@ -144,35 +147,44 @@ public class QuizServer {
 
                     // Handle the CONNECT|SERVER request from the client
                     if (request.equals("CONNECT|SERVER")) {
-                        out.println("200|Connection_Accepted|" + quizQuestions.size()); // 총 질문 수
+                        out.println("200|Connection_Accepted|" + selectedQuestions.size());
                         out.flush();
                         System.out.println(
-                                "Sent to client " + clientId + ": 200|Connection_Accepted|" + quizQuestions.size());
+                                "Sent to client " + clientId + ": 200|Connection_Accepted|" + selectedQuestions.size());
 
                     } else if (request.equals("QUIZ|REQUEST")) {
-                        // Handle quiz request and send a random question
-                        currentQuestion = server.getRandomQuestion();
-                        if (currentQuestion != null) {
-                            out.println(
-                                    "201|Quiz_Content|" + currentQuestion.getQuestion() + "|1/" + quizQuestions.size());
-                            System.out.println("Sent to client " + clientId + ": 201|Quiz_Content|"
-                                    + currentQuestion.getQuestion() + "|1/" + quizQuestions.size());
+                        // Send the next question in the selected questions
+                        if (currentQuestionIndex < selectedQuestions.size()) {
+                            QuizQuestion currentQuestion = selectedQuestions.get(currentQuestionIndex);
+                            out.println("201|Quiz_Content|" + currentQuestion.getQuestion() + "|"
+                                    + (currentQuestionIndex + 1) + "/" + selectedQuestions.size());
+                            System.out.println(
+                                    "Sent to client " + clientId + ": 201|Quiz_Content|" + currentQuestion.getQuestion()
+                                            + "|" + (currentQuestionIndex + 1) + "/" + selectedQuestions.size());
                         } else {
-                            out.println("Error|No questions available.");
+                            out.println("204|Final_Score|" + score); // Send final score when no more questions
+                            System.out.println("Sent to client " + clientId + ": 204|Final_Score|" + score);
                         }
                         out.flush();
 
                     } else if (request.startsWith("ANSWER|")) {
                         // Handle answer submission
                         String answer = request.substring(7);
-                        boolean correct = currentQuestion != null && currentQuestion.isCorrectAnswer(answer);
-                        if (correct) {
-                            score++;
-                            out.println("202|Correct_Answer");
-                            System.out.println("Sent to client " + clientId + ": 202|Correct_Answer");
+                        if (currentQuestionIndex < selectedQuestions.size()) {
+                            QuizQuestion currentQuestion = selectedQuestions.get(currentQuestionIndex);
+                            boolean correct = currentQuestion.isCorrectAnswer(answer);
+                            if (correct) {
+                                score++;
+                                out.println("202|Correct_Answer");
+                                System.out.println("Sent to client " + clientId + ": 202|Correct_Answer");
+                            } else {
+                                out.println("203|Wrong_Answer");
+                                System.out.println("Sent to client " + clientId + ": 203|Wrong_Answer");
+                            }
+                            currentQuestionIndex++; // Move to the next question
                         } else {
-                            out.println("203|Wrong_Answer");
-                            System.out.println("Sent to client " + clientId + ": 203|Wrong_Answer");
+                            out.println("204|Final_Score|" + score);
+                            System.out.println("Sent to client " + clientId + ": 204|Final_Score|" + score);
                         }
                         out.flush();
                         server.updateClientScore(clientId, score);
