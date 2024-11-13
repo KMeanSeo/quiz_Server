@@ -62,7 +62,18 @@ public class QuizServer {
         try (BufferedReader br = new BufferedReader(new FileReader(QUIZ_FILE))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",", 2);
+                // Check if the line contains quotes to handle comma within quotes
+                String[] parts;
+                if (line.contains("\"")) {
+                    int quoteIndex1 = line.indexOf("\"");
+                    int quoteIndex2 = line.indexOf("\"", quoteIndex1 + 1);
+                    String question = line.substring(quoteIndex1 + 1, quoteIndex2);
+                    String answer = line.substring(quoteIndex2 + 2).trim();
+                    parts = new String[] { question, answer };
+                } else {
+                    parts = line.split(",", 2); // Split normally if no quotes
+                }
+
                 if (parts.length >= 2) {
                     String question = parts[0].trim();
                     String answer = parts[1].trim();

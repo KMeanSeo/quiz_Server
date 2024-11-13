@@ -3,7 +3,7 @@ import java.net.*;
 
 public class QuizClient {
     // Server address and port number for the connection
-    private static final String SERVER_ADDRESS = "192.168.1.237";
+    private static final String SERVER_ADDRESS = "192.168.1.237"; // 서버 IP
     private static final int PORT = 7777;
 
     // Socket, input and output streams for communication
@@ -21,7 +21,7 @@ public class QuizClient {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             // Initialize the output stream to send data to the server
-            out = new PrintWriter(socket.getOutputStream(), true); // autoFlush enabled
+            out = new PrintWriter(socket.getOutputStream(), true);
 
             System.out.println("Connected to the server at " + SERVER_ADDRESS + ":" + PORT);
         } catch (IOException e) {
@@ -72,7 +72,6 @@ public class QuizClient {
     // Method to receive a response from the server (e.g., feedback or next
     // question)
     public String receiveResponse() throws IOException {
-        // Read and return the server's response
         String response = in.readLine();
         System.out.println("Received from server: " + response);
         return response;
@@ -81,7 +80,6 @@ public class QuizClient {
     // Method to close the connection to the server
     public void closeConnection() throws IOException {
         System.out.println("Closing connection to server...");
-        // Close the socket connection to the server
         socket.close();
     }
 

@@ -48,7 +48,7 @@ public class QuizServerGUI extends JFrame {
 
         // Create labels for client status and score
         JLabel idLabel = new JLabel(clientId);
-        JLabel statusLabel = new JLabel("Status: Disconnected");
+        JLabel statusLabel = new JLabel("Status: Connected");
         JLabel scoreLabel = new JLabel("Score: 0");
 
         // Store the labels in their respective maps, using client ID as the key
