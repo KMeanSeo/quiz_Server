@@ -5,12 +5,16 @@ import java.util.*;
 public class QuizServer {
     // Port number the server will listen on
     private static final int PORT = 7777;
+    private static final String QUIZ_FILE = "quiz_questions.csv"; // CSV 파일 경로
 
     // Server socket to accept client connections
     private ServerSocket serverSocket;
 
     // List to hold all connected clients
     private List<ClientHandler> clients = new ArrayList<>();
+
+    // List to hold quiz questions and answers
+    private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     // GUI for the server to monitor client status and scores
     private QuizServerGUI serverGUI;
@@ -22,6 +26,9 @@ public class QuizServer {
 
         // Initialize the server's GUI
         serverGUI = new QuizServerGUI(this);
+
+        // Load quiz questions from CSV file
+        loadQuizQuestions();
 
         // Make the server GUI visible
         serverGUI.setVisible(true);
@@ -48,6 +55,32 @@ public class QuizServer {
                 System.err.println("Error accepting client connection: " + e.getMessage());
             }
         }
+    }
+
+    // Method to load quiz questions from a CSV file
+    private void loadQuizQuestions() {
+        try (BufferedReader br = new BufferedReader(new FileReader(QUIZ_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",", 2);
+                if (parts.length >= 2) {
+                    String question = parts[0].trim();
+                    String answer = parts[1].trim();
+                    quizQuestions.add(new QuizQuestion(question, answer));
+                }
+            }
+            System.out.println("Loaded " + quizQuestions.size() + " quiz questions.");
+        } catch (IOException e) {
+            System.err.println("Error loading quiz questions: " + e.getMessage());
+        }
+    }
+
+    // Method to get a random quiz question
+    private QuizQuestion getRandomQuestion() {
+        if (quizQuestions.isEmpty())
+            return null;
+        Random random = new Random();
+        return quizQuestions.get(random.nextInt(quizQuestions.size()));
     }
 
     // Method to update client status in the GUI
@@ -79,6 +112,7 @@ public class QuizServer {
         private String clientId;
         private int score;
         private QuizServer server;
+        private QuizQuestion currentQuestion;
 
         // Constructor to initialize the client handler with socket and server reference
         public ClientHandler(Socket socket, QuizServer server) throws IOException {
@@ -110,19 +144,28 @@ public class QuizServer {
 
                     // Handle the CONNECT|SERVER request from the client
                     if (request.equals("CONNECT|SERVER")) {
-                        out.println("200|Connection_Accepted|10"); // 10은 예시로 설정한 총 질문 수
+                        out.println("200|Connection_Accepted|" + quizQuestions.size()); // 총 질문 수
                         out.flush();
-                        System.out.println("Sent to client " + clientId + ": 200|Connection_Accepted|10");
+                        System.out.println(
+                                "Sent to client " + clientId + ": 200|Connection_Accepted|" + quizQuestions.size());
 
                     } else if (request.equals("QUIZ|REQUEST")) {
-                        // Handle quiz request and send a sample question
-                        out.println("201|Quiz_Content|Sample Question|1/10");
+                        // Handle quiz request and send a random question
+                        currentQuestion = server.getRandomQuestion();
+                        if (currentQuestion != null) {
+                            out.println(
+                                    "201|Quiz_Content|" + currentQuestion.getQuestion() + "|1/" + quizQuestions.size());
+                            System.out.println("Sent to client " + clientId + ": 201|Quiz_Content|"
+                                    + currentQuestion.getQuestion() + "|1/" + quizQuestions.size());
+                        } else {
+                            out.println("Error|No questions available.");
+                        }
                         out.flush();
-                        System.out.println("Sent to client " + clientId + ": 201|Quiz_Content|Sample Question|1/10");
 
                     } else if (request.startsWith("ANSWER|")) {
                         // Handle answer submission
-                        boolean correct = processAnswer(request.substring(7));
+                        String answer = request.substring(7);
+                        boolean correct = currentQuestion != null && currentQuestion.isCorrectAnswer(answer);
                         if (correct) {
                             score++;
                             out.println("202|Correct_Answer");
@@ -153,10 +196,24 @@ public class QuizServer {
                 server.updateClientStatus(clientId, "Disconnected");
             }
         }
+    }
 
-        // Method to process the client's answer
-        private boolean processAnswer(String answer) {
-            return "correct".equalsIgnoreCase(answer);
+    // Inner class to represent a quiz question
+    private static class QuizQuestion {
+        private String question;
+        private String answer;
+
+        public QuizQuestion(String question, String answer) {
+            this.question = question;
+            this.answer = answer;
+        }
+
+        public String getQuestion() {
+            return question;
+        }
+
+        public boolean isCorrectAnswer(String userAnswer) {
+            return answer.equalsIgnoreCase(userAnswer.trim());
         }
     }
 }
