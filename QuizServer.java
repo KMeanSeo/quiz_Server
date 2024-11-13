@@ -17,8 +17,8 @@ public class QuizServer {
 
     // Constructor to initialize the server socket and GUI
     public QuizServer() throws IOException {
-        // Create server socket to listen on the specified port
-        serverSocket = new ServerSocket(PORT);
+        // Create server socket to listen on the specified port using IPv4
+        serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
 
         // Initialize the server's GUI
         serverGUI = new QuizServerGUI(this);
