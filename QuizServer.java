@@ -99,30 +99,39 @@ public class QuizServer {
         @Override
         public void run() {
             try {
+                System.out.println("Client " + clientId + " connected.");
                 // Update client status to "Connected" in the server GUI
                 server.updateClientStatus(clientId, "Connected");
 
                 String request;
                 // Listen for incoming requests from the client
                 while ((request = in.readLine()) != null) {
+                    System.out.println("Received from client " + clientId + ": " + request); // 로그 추가
+
                     if (request.startsWith("ANSWER|")) {
                         // Process the answer and update the score
                         boolean correct = processAnswer(request.substring(7));
                         if (correct) {
                             score++; // Increment score if answer is correct
                             out.println("202|Correct_Answer");
+                            System.out.println("Sent to client " + clientId + ": 202|Correct_Answer"); // 로그 추가
                         } else {
                             out.println("203|Wrong_Answer");
+                            System.out.println("Sent to client " + clientId + ": 203|Wrong_Answer"); // 로그 추가
                         }
+                        out.flush(); // 플러시 호출
                         // Update the client score in the GUI
                         server.updateClientScore(clientId, score);
                     } else if (request.equals("QUIZ|REQUEST")) {
                         // Send a quiz question to the client
                         out.println("201|Quiz_Content|Sample Question|1/10");
+                        System.out.println("Sent to client " + clientId + ": 201|Quiz_Content|Sample Question|1/10"); // 로그
+                                                                                                                      // 추가
+                        out.flush(); // 플러시 호출
                     }
                 }
             } catch (IOException e) {
-                System.err.println("Error communicating with client: " + e.getMessage());
+                System.err.println("Error communicating with client " + clientId + ": " + e.getMessage());
             } finally {
                 try {
                     // Close the socket connection
@@ -132,6 +141,7 @@ public class QuizServer {
                 } catch (IOException e) {
                     System.err.println("Error closing client socket: " + e.getMessage());
                 }
+                System.out.println("Client " + clientId + " disconnected.");
                 // Update client status to "Disconnected" in the server GUI
                 server.updateClientStatus(clientId, "Disconnected");
             }

@@ -37,10 +37,12 @@ public class QuizClientGUI extends JFrame {
 
         // Create text field for entering answers
         inputField = new JTextField();
+        inputField.setEnabled(false); // Initially disabled
         inputPanel.add(inputField, BorderLayout.CENTER);
 
         // Create button to submit answer
         submitButton = new JButton("Submit Answer");
+        submitButton.setEnabled(false); // Initially disabled
         submitButton.addActionListener(new SubmitAnswerListener());
         inputPanel.add(submitButton, BorderLayout.EAST);
 
@@ -51,8 +53,13 @@ public class QuizClientGUI extends JFrame {
         // Add input panel to the bottom of the frame
         add(inputPanel, BorderLayout.SOUTH);
 
+        // Establish connection to the server
+        connectToServer();
+    }
+
+    // Method to establish connection to the server
+    private void connectToServer() {
         try {
-            // Establish connection to the server
             quizClient = new QuizClient();
             String connectResponse = quizClient.connectToServer();
             chatArea.append("Server: " + connectResponse + "\n");
@@ -81,6 +88,7 @@ public class QuizClientGUI extends JFrame {
         try {
             // Request quiz content from the server
             String response = quizClient.requestQuiz();
+            System.out.println("Requested quiz from server");
             processResponse(response);
         } catch (IOException e) {
             // Show error if quiz request fails
@@ -101,6 +109,7 @@ public class QuizClientGUI extends JFrame {
         try {
             // Send the user's answer to the server
             String response = quizClient.sendAnswer(answer);
+            System.out.println("Sent answer to server: " + answer);
             processResponse(response);
         } catch (IOException e) {
             // Show error if sending answer fails
@@ -113,6 +122,11 @@ public class QuizClientGUI extends JFrame {
 
     // Method to process the server's response
     protected void processResponse(String response) {
+        if (response == null || response.isEmpty()) {
+            chatArea.append("Server: No response received.\n");
+            return;
+        }
+
         if (response.startsWith("201|Quiz_Content")) {
             // If the server sends a new quiz question, update UI with the question
             String[] parts = response.split("\\|");
