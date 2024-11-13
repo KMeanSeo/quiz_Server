@@ -44,7 +44,7 @@ public class QuizServer {
                 // Start a new thread for the client handler
                 new Thread(clientHandler).start();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Error accepting client connection: " + e.getMessage());
             }
         }
     }
@@ -66,7 +66,7 @@ public class QuizServer {
             QuizServer server = new QuizServer();
             server.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error starting server: " + e.getMessage());
         }
     }
 
@@ -122,13 +122,15 @@ public class QuizServer {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Error communicating with client: " + e.getMessage());
             } finally {
                 try {
                     // Close the socket connection
-                    socket.close();
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    System.err.println("Error closing client socket: " + e.getMessage());
                 }
                 // Update client status to "Disconnected" in the server GUI
                 server.updateClientStatus(clientId, "Disconnected");

@@ -12,6 +12,9 @@ public class QuizServerGUI extends JFrame {
     private Map<String, JLabel> clientStatusLabels;
     private Map<String, JLabel> clientScoreLabels;
 
+    // Panel to display client information
+    private JPanel clientPanel;
+
     // Constructor to initialize the server monitor GUI
     public QuizServerGUI(QuizServer server) {
         // Set window title, size, and default close operation
@@ -30,19 +33,21 @@ public class QuizServerGUI extends JFrame {
         add(new JScrollPane(statusArea), BorderLayout.CENTER); // Add text area to the center of the window
 
         // Create a panel for displaying client statuses and scores
-        JPanel clientPanel = new JPanel();
-        clientPanel.setLayout(new GridLayout(0, 2)); // Layout with 2 columns (client ID, status and score)
-        add(clientPanel, BorderLayout.SOUTH); // Add panel to the bottom of the window
-
-        // Example of adding two clients
-        addClient("Client1");
-        addClient("Client2");
+        clientPanel = new JPanel();
+        clientPanel.setLayout(new GridLayout(0, 3, 10, 10)); // 3 columns: Client ID, Status, Score
+        add(new JScrollPane(clientPanel), BorderLayout.SOUTH); // Add panel to the bottom of the window
     }
 
     // Method to add a new client to the GUI (with client ID, status, and score
     // labels)
     public void addClient(String clientId) {
+        if (clientStatusLabels.containsKey(clientId)) {
+            // If client already exists, no need to add again
+            return;
+        }
+
         // Create labels for client status and score
+        JLabel idLabel = new JLabel(clientId);
         JLabel statusLabel = new JLabel("Status: Disconnected");
         JLabel scoreLabel = new JLabel("Score: 0");
 
@@ -50,11 +55,14 @@ public class QuizServerGUI extends JFrame {
         clientStatusLabels.put(clientId, statusLabel);
         clientScoreLabels.put(clientId, scoreLabel);
 
-        // Get the client panel and add the client ID, status label, and score label
-        JPanel clientPanel = (JPanel) getContentPane().getComponent(1);
-        clientPanel.add(new JLabel(clientId));
+        // Add the client ID, status label, and score label to the panel
+        clientPanel.add(idLabel);
         clientPanel.add(statusLabel);
         clientPanel.add(scoreLabel);
+
+        // Refresh the layout to display the new client
+        clientPanel.revalidate();
+        clientPanel.repaint();
     }
 
     // Method to update the status of a client in the GUI
@@ -86,6 +94,14 @@ public class QuizServerGUI extends JFrame {
                 addClient(clientId);
                 clientScoreLabels.get(clientId).setText("Score: " + score);
             }
+        });
+    }
+
+    // Method to display general server status messages
+    public void appendStatusMessage(String message) {
+        SwingUtilities.invokeLater(() -> {
+            statusArea.append(message + "\n");
+            statusArea.setCaretPosition(statusArea.getDocument().getLength()); // Auto-scroll
         });
     }
 
