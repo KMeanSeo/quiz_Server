@@ -83,4 +83,13 @@ public class QuizServerGUI extends JFrame {
     public void appendStatusMessage(String message) {
         statusArea.append(message + "\n");
     }
+
+    // Main method to test the GUI independently
+    public static void main(String[] args) {
+        // Create a dummy QuizServer instance (null for testing purposes)
+        QuizServer dummyServer = null;
+
+        // Create and display the GUI
+        SwingUtilities.invokeLater(() -> new QuizServerGUI(dummyServer));
+    }
 }
