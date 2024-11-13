@@ -78,4 +78,9 @@ public class QuizServerGUI extends JFrame {
             progressLabel.setText(currentQuestion + "/" + totalQuestions);
         }
     }
+
+    // Method to append a message to the status area
+    public void appendStatusMessage(String message) {
+        statusArea.append(message + "\n");
+    }
 }
