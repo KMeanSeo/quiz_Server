@@ -53,6 +53,7 @@ public class QuizServer {
                 new Thread(clientHandler).start();
             } catch (IOException e) {
                 System.err.println("Error accepting client connection: " + e.getMessage());
+                serverGUI.appendStatusMessage("Error accepting client connection: " + e.getMessage());
             }
         }
     }
@@ -62,18 +63,7 @@ public class QuizServer {
         try (BufferedReader br = new BufferedReader(new FileReader(QUIZ_FILE))) {
             String line;
             while ((line = br.readLine()) != null) {
-                // Check if the line contains quotes to handle comma within quotes
-                String[] parts;
-                if (line.contains("\"")) {
-                    int quoteIndex1 = line.indexOf("\"");
-                    int quoteIndex2 = line.indexOf("\"", quoteIndex1 + 1);
-                    String question = line.substring(quoteIndex1 + 1, quoteIndex2);
-                    String answer = line.substring(quoteIndex2 + 2).trim();
-                    parts = new String[] { question, answer };
-                } else {
-                    parts = line.split(",", 2); // Split normally if no quotes
-                }
-
+                String[] parts = line.split(",", 2);
                 if (parts.length >= 2) {
                     String question = parts[0].trim();
                     String answer = parts[1].trim();
@@ -81,8 +71,10 @@ public class QuizServer {
                 }
             }
             System.out.println("Loaded " + quizQuestions.size() + " quiz questions.");
+            serverGUI.appendStatusMessage("Loaded " + quizQuestions.size() + " quiz questions.");
         } catch (IOException e) {
             System.err.println("Error loading quiz questions: " + e.getMessage());
+            serverGUI.appendStatusMessage("Error loading quiz questions: " + e.getMessage());
         }
     }
 
@@ -142,6 +134,10 @@ public class QuizServer {
 
             // Select 10 random quiz questions for this client
             selectedQuestions = server.getRandomQuestions(10);
+
+            // Register client in GUI
+            server.updateClientStatus(clientId, "Connected");
+            server.updateClientScore(clientId, score);
         }
 
         // Method that runs on a separate thread to handle client communication
@@ -155,13 +151,13 @@ public class QuizServer {
                 // Listen for incoming requests from the client
                 while ((request = in.readLine()) != null) {
                     System.out.println("Received from client " + clientId + ": " + request);
+                    serverGUI.appendStatusMessage("Received from client " + clientId + ": " + request);
 
                     // Handle the CONNECT|SERVER request from the client
                     if (request.equals("CONNECT|SERVER")) {
                         out.println("200|Connection_Accepted|" + selectedQuestions.size());
                         out.flush();
-                        System.out.println(
-                                "Sent to client " + clientId + ": 200|Connection_Accepted|" + selectedQuestions.size());
+                        serverGUI.appendStatusMessage("Sent to client " + clientId + ": Connection accepted");
 
                     } else if (request.equals("QUIZ|REQUEST")) {
                         // Send the next question in the selected questions
@@ -169,12 +165,12 @@ public class QuizServer {
                             QuizQuestion currentQuestion = selectedQuestions.get(currentQuestionIndex);
                             out.println("201|Quiz_Content|" + currentQuestion.getQuestion() + "|"
                                     + (currentQuestionIndex + 1) + "/" + selectedQuestions.size());
-                            System.out.println(
-                                    "Sent to client " + clientId + ": 201|Quiz_Content|" + currentQuestion.getQuestion()
-                                            + "|" + (currentQuestionIndex + 1) + "/" + selectedQuestions.size());
+                            serverGUI.appendStatusMessage(
+                                    "Sent question " + (currentQuestionIndex + 1) + " to client " + clientId);
                         } else {
                             out.println("204|Final_Score|" + score); // Send final score when no more questions
-                            System.out.println("Sent to client " + clientId + ": 204|Final_Score|" + score);
+                            serverGUI.appendStatusMessage(
+                                    "Quiz complete for client " + clientId + ". Final Score: " + score);
                         }
                         out.flush();
 
@@ -187,15 +183,16 @@ public class QuizServer {
                             if (correct) {
                                 score++;
                                 out.println("202|Correct_Answer");
-                                System.out.println("Sent to client " + clientId + ": 202|Correct_Answer");
+                                serverGUI.appendStatusMessage("Client " + clientId + " answered correctly.");
                             } else {
                                 out.println("203|Wrong_Answer");
-                                System.out.println("Sent to client " + clientId + ": 203|Wrong_Answer");
+                                serverGUI.appendStatusMessage("Client " + clientId + " answered incorrectly.");
                             }
                             currentQuestionIndex++; // Move to the next question
                         } else {
                             out.println("204|Final_Score|" + score);
-                            System.out.println("Sent to client " + clientId + ": 204|Final_Score|" + score);
+                            serverGUI.appendStatusMessage(
+                                    "Quiz finished for client " + clientId + ". Final score: " + score);
                         }
                         out.flush();
                         server.updateClientScore(clientId, score);
@@ -203,11 +200,13 @@ public class QuizServer {
                     } else {
                         // Handle unrecognized requests
                         System.out.println("Unrecognized message from client " + clientId + ": " + request);
+                        serverGUI.appendStatusMessage("Unrecognized message from client " + clientId + ": " + request);
                     }
                 }
                 System.out.println("Client " + clientId + " disconnected.");
             } catch (IOException e) {
                 System.err.println("Error communicating with client " + clientId + ": " + e.getMessage());
+                serverGUI.appendStatusMessage("Error communicating with client " + clientId + ": " + e.getMessage());
             } finally {
                 try {
                     if (socket != null && !socket.isClosed()) {
