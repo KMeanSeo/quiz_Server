@@ -2,6 +2,8 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import javax.swing.SwingUtilities;
+
 public class QuizServer {
     // Port number the server will listen on
     private static final int PORT = 7777;
@@ -85,7 +87,7 @@ public class QuizServer {
     }
 
     // Method to get a list of 10 random quiz questions
-    private List<QuizQuestion> getRandomQuestions(int count) {
+    public List<QuizQuestion> getRandomQuestions(int count) {
         List<QuizQuestion> questions = new ArrayList<>(quizQuestions);
         Collections.shuffle(questions);
         return questions.subList(0, Math.min(count, questions.size()));
@@ -93,17 +95,17 @@ public class QuizServer {
 
     // Method to update client status in the GUI
     public synchronized void updateClientStatus(String clientId, String status) {
-        serverGUI.updateClientStatus(clientId, status);
+        SwingUtilities.invokeLater(() -> serverGUI.updateClientStatus(clientId, status));
     }
 
     // Method to update client score in the GUI
     public synchronized void updateClientScore(String clientId, int score) {
-        serverGUI.updateClientScore(clientId, score);
+        SwingUtilities.invokeLater(() -> serverGUI.updateClientScore(clientId, score));
     }
 
     // Method to update client progress in the GUI
     public synchronized void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
-        serverGUI.updateClientProgress(clientId, currentQuestion, totalQuestions);
+        SwingUtilities.invokeLater(() -> serverGUI.updateClientProgress(clientId, currentQuestion, totalQuestions));
     }
 
     // Main method to start the server
@@ -201,7 +203,7 @@ public class QuizServer {
     }
 
     // Inner class to represent a quiz question
-    private static class QuizQuestion {
+    public static class QuizQuestion {
         private String question;
         private String answer;
 
