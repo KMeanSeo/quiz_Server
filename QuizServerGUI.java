@@ -4,13 +4,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QuizServerGUI extends JFrame {
+    private QuizServer server; // 서버 참조 추가
     private JTextArea statusArea;
     private JPanel clientPanel;
     private Map<String, JLabel> clientStatusLabels;
     private Map<String, JLabel> clientScoreLabels;
     private Map<String, JLabel> clientProgressLabels;
 
+    // QuizServer 인스턴스를 인자로 받는 생성자 추가
+    public QuizServerGUI(QuizServer server) {
+        this.server = server; // 서버 참조 초기화
+        initializeGUI(); // GUI 초기화 메서드 호출
+    }
+
+    // 기본 생성자
     public QuizServerGUI() {
+        initializeGUI(); // GUI 초기화 메서드 호출
+    }
+
+    private void initializeGUI() {
         setTitle("Quiz Server");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -22,20 +34,17 @@ public class QuizServerGUI extends JFrame {
 
         // Initialize the text area to display server messages
         statusArea = new JTextArea();
-        statusArea.setEditable(false); // Make the text area non-editable
-        add(new JScrollPane(statusArea), BorderLayout.CENTER); // Add text area to the center of the window
+        statusArea.setEditable(false);
+        add(new JScrollPane(statusArea), BorderLayout.CENTER);
 
         // Create a panel for displaying client statuses, scores, and progress
         clientPanel = new JPanel();
-        clientPanel.setLayout(new GridLayout(0, 4, 10, 10)); // 4 columns: Client ID, Status, Score, Progress
-        add(new JScrollPane(clientPanel), BorderLayout.SOUTH); // Add panel to the bottom of the window
+        clientPanel.setLayout(new GridLayout(0, 4, 10, 10));
+        add(new JScrollPane(clientPanel), BorderLayout.SOUTH);
 
-        // Make the GUI visible
         setVisible(true);
     }
 
-    // Method to add a new client to the GUI (with client ID, status, score, and
-    // progress labels)
     public void addClient(String clientId, int totalQuestions) {
         JLabel statusLabel = new JLabel("Connected");
         JLabel scoreLabel = new JLabel("0");
@@ -50,12 +59,10 @@ public class QuizServerGUI extends JFrame {
         clientPanel.add(scoreLabel);
         clientPanel.add(progressLabel);
 
-        // Refresh the client panel to show the new client
         clientPanel.revalidate();
         clientPanel.repaint();
     }
 
-    // Method to update client status in the GUI
     public void updateClientStatus(String clientId, String status) {
         SwingUtilities.invokeLater(() -> {
             JLabel statusLabel = clientStatusLabels.get(clientId);
@@ -65,7 +72,6 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
-    // Method to update client score in the GUI
     public void updateClientScore(String clientId, int score) {
         SwingUtilities.invokeLater(() -> {
             JLabel scoreLabel = clientScoreLabels.get(clientId);
@@ -75,7 +81,6 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
-    // Method to update client progress in the GUI
     public void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
         SwingUtilities.invokeLater(() -> {
             JLabel progressLabel = clientProgressLabels.get(clientId);
@@ -85,17 +90,14 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
-    // Method to append a message to the status area
     public void appendStatusMessage(String message) {
         SwingUtilities.invokeLater(() -> {
             statusArea.append(message + "\n");
-            statusArea.setCaretPosition(statusArea.getDocument().getLength()); // Scroll to the bottom
+            statusArea.setCaretPosition(statusArea.getDocument().getLength());
         });
     }
 
-    // Main method to test the GUI independently
     public static void main(String[] args) {
-        // Create and display the GUI
         SwingUtilities.invokeLater(QuizServerGUI::new);
     }
 }
