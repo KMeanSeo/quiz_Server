@@ -12,17 +12,27 @@ public class QuizServer {
     private QuizServerGUI serverGUI;
 
     public QuizServer() throws IOException {
-        // IPv4로 서버 소켓을 생성하고 포트에서 수신 대기
-        serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
+        System.out.println("Initializing server...");
+        try {
+            // IPv4로 서버 소켓을 생성하고 포트에서 수신 대기
+            serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
+            System.out.println("Server socket created. Listening on port " + PORT);
+        } catch (IOException e) {
+            System.err.println("Failed to create server socket on port " + PORT + ": " + e.getMessage());
+            throw e;
+        }
 
         // 서버 GUI 초기화
+        System.out.println("Initializing GUI...");
         serverGUI = new QuizServerGUI(this);
 
         // 퀴즈 CSV 파일에서 문제 불러오기
+        System.out.println("Loading quiz questions from file: " + QUIZ_FILE);
         loadQuizQuestions();
 
         // GUI 표시
         serverGUI.setVisible(true);
+        System.out.println("Server initialized successfully.");
     }
 
     // 서버 시작 메서드 - 클라이언트 연결 대기
@@ -30,8 +40,9 @@ public class QuizServer {
         System.out.println("Quiz Server started...");
         while (true) {
             try {
+                System.out.println("Waiting for client connections...");
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connection accepted.");
+                System.out.println("New client connection accepted: " + clientSocket);
 
                 // 클라이언트 핸들러 생성 및 스레드 시작
                 ClientHandler clientHandler = new ClientHandler(clientSocket, this);
@@ -62,9 +73,9 @@ public class QuizServer {
                     quizQuestions.add(new QuizQuestion(parts[0].trim(), parts[1].trim()));
                 }
             }
-            System.out.println("Loaded " + quizQuestions.size() + " quiz questions.");
+            System.out.println("Loaded " + quizQuestions.size() + " quiz questions successfully.");
         } catch (IOException e) {
-            System.err.println("Error loading quiz questions: " + e.getMessage());
+            System.err.println("Error loading quiz questions from file " + QUIZ_FILE + ": " + e.getMessage());
         }
     }
 
@@ -112,6 +123,7 @@ public class QuizServer {
             this.socket = socket;
             this.server = server;
 
+            System.out.println("Setting up client handler for client: " + socket);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -123,6 +135,7 @@ public class QuizServer {
             server.updateClientStatus(clientId, "Connected");
             server.updateClientScore(clientId, score);
             server.updateClientProgress(clientId, currentQuestionIndex + 1, selectedQuestions.size());
+            System.out.println("Client handler set up completed for client: " + clientId);
         }
 
         @Override
@@ -147,6 +160,7 @@ public class QuizServer {
                 try {
                     if (socket != null && !socket.isClosed()) {
                         socket.close();
+                        System.out.println("Closed connection for client: " + clientId);
                     }
                 } catch (IOException e) {
                     System.err.println("Error closing client socket: " + e.getMessage());
@@ -158,6 +172,7 @@ public class QuizServer {
         private void handleQuizRequest() {
             if (currentQuestionIndex >= selectedQuestions.size()) {
                 out.println("204|Final_Score|" + score);
+                System.out.println("Sent final score to client " + clientId + ": " + score);
                 return;
             }
 
@@ -167,6 +182,7 @@ public class QuizServer {
                     + selectedQuestions.size();
             out.println(response);
             server.updateClientProgress(clientId, currentQuestionIndex, selectedQuestions.size());
+            System.out.println("Sent quiz question to client " + clientId + ": " + currentQuestion.getQuestion());
         }
 
         private void handleAnswer(String request) {
@@ -183,6 +199,8 @@ public class QuizServer {
             }
             out.println(response);
             server.updateClientScore(clientId, score);
+            System.out.println(
+                    "Client " + clientId + " answered question. Correct: " + correct + ", Current score: " + score);
         }
     }
 
