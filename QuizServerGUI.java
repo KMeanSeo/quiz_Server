@@ -10,7 +10,7 @@ public class QuizServerGUI extends JFrame {
     private Map<String, JLabel> clientScoreLabels;
     private Map<String, JLabel> clientProgressLabels;
 
-    public QuizServerGUI(QuizServer server) {
+    public QuizServerGUI() {
         setTitle("Quiz Server");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -57,39 +57,45 @@ public class QuizServerGUI extends JFrame {
 
     // Method to update client status in the GUI
     public void updateClientStatus(String clientId, String status) {
-        JLabel statusLabel = clientStatusLabels.get(clientId);
-        if (statusLabel != null) {
-            statusLabel.setText(status);
-        }
+        SwingUtilities.invokeLater(() -> {
+            JLabel statusLabel = clientStatusLabels.get(clientId);
+            if (statusLabel != null) {
+                statusLabel.setText(status);
+            }
+        });
     }
 
     // Method to update client score in the GUI
     public void updateClientScore(String clientId, int score) {
-        JLabel scoreLabel = clientScoreLabels.get(clientId);
-        if (scoreLabel != null) {
-            scoreLabel.setText(String.valueOf(score));
-        }
+        SwingUtilities.invokeLater(() -> {
+            JLabel scoreLabel = clientScoreLabels.get(clientId);
+            if (scoreLabel != null) {
+                scoreLabel.setText(String.valueOf(score));
+            }
+        });
     }
 
     // Method to update client progress in the GUI
     public void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
-        JLabel progressLabel = clientProgressLabels.get(clientId);
-        if (progressLabel != null) {
-            progressLabel.setText(currentQuestion + "/" + totalQuestions);
-        }
+        SwingUtilities.invokeLater(() -> {
+            JLabel progressLabel = clientProgressLabels.get(clientId);
+            if (progressLabel != null) {
+                progressLabel.setText(currentQuestion + "/" + totalQuestions);
+            }
+        });
     }
 
     // Method to append a message to the status area
     public void appendStatusMessage(String message) {
-        statusArea.append(message + "\n");
+        SwingUtilities.invokeLater(() -> {
+            statusArea.append(message + "\n");
+            statusArea.setCaretPosition(statusArea.getDocument().getLength()); // Scroll to the bottom
+        });
     }
 
     // Main method to test the GUI independently
     public static void main(String[] args) {
-        // Create a dummy QuizServer instance (null for testing purposes)
-        QuizServer dummyServer = null;
-
         // Create and display the GUI
-        SwingUtilities.invokeLater(() -> new QuizServerGUI(dummyServer));
+        SwingUtilities.invokeLater(QuizServerGUI::new);
     }
 }
