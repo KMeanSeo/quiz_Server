@@ -4,15 +4,15 @@ import java.util.*;
 import javax.swing.*;
 
 public class QuizServer {
-    private static final int PORT = 7777; // 서버 포트 번호
-    private static final String QUIZ_FILE = "quiz_list.csv"; // 퀴즈 CSV 파일 경로
+    private static final int PORT = 7777;
+    private static final String QUIZ_FILE = "quiz_list.csv";
     private ServerSocket serverSocket;
-    private List<ClientHandler> clients = new ArrayList<>(); // 연결된 클라이언트 리스트
-    private List<QuizQuestion> quizQuestions = new ArrayList<>(); // 퀴즈 문제와 답 리스트
+    private List<ClientHandler> clients = new ArrayList<>();
+    private List<QuizQuestion> quizQuestions = new ArrayList<>();
     private QuizServerGUI serverGUI;
 
     public QuizServer() {
-        initializeServer(); // 서버 초기화 메서드 호출
+        initializeServer();
     }
 
     private void initializeServer() {
@@ -29,7 +29,7 @@ public class QuizServer {
                 serverSocket = new ServerSocket(PORT, 50, InetAddress.getByName("0.0.0.0"));
                 System.out.println("Server socket created. Listening on port " + PORT);
 
-                loadQuizQuestions(); // 퀴즈 CSV 파일에서 문제 불러오기
+                loadQuizQuestions();
                 start();
             } catch (IOException e) {
                 System.err.println("Failed to initialize server socket on port " + PORT + ": " + e.getMessage());
@@ -79,15 +79,24 @@ public class QuizServer {
     }
 
     public synchronized void updateClientStatus(String clientId, String status) {
-        SwingUtilities.invokeLater(() -> serverGUI.updateClientStatus(clientId, status));
+        SwingUtilities.invokeLater(() -> {
+            serverGUI.updateClientStatus(clientId, status);
+            serverGUI.refreshClientPanel();
+        });
     }
 
     public synchronized void updateClientScore(String clientId, int score) {
-        SwingUtilities.invokeLater(() -> serverGUI.updateClientScore(clientId, score));
+        SwingUtilities.invokeLater(() -> {
+            serverGUI.updateClientScore(clientId, score);
+            serverGUI.refreshClientPanel();
+        });
     }
 
     public synchronized void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
-        SwingUtilities.invokeLater(() -> serverGUI.updateClientProgress(clientId, currentQuestion, totalQuestions));
+        SwingUtilities.invokeLater(() -> {
+            serverGUI.updateClientProgress(clientId, currentQuestion, totalQuestions);
+            serverGUI.refreshClientPanel();
+        });
     }
 
     public static void main(String[] args) {

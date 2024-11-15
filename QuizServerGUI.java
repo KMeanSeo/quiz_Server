@@ -45,8 +45,7 @@ public class QuizServerGUI extends JFrame {
         clientPanel.add(scoreLabel);
         clientPanel.add(progressLabel);
 
-        clientPanel.revalidate();
-        clientPanel.repaint();
+        refreshClientPanel();
     }
 
     public void updateClientStatus(String clientId, String status) {
@@ -73,7 +72,17 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
+    public void refreshClientPanel() {
+        SwingUtilities.invokeLater(() -> {
+            clientPanel.revalidate();
+            clientPanel.repaint();
+        });
+    }
+
     public void appendStatusMessage(String message) {
-        SwingUtilities.invokeLater(() -> statusArea.append(message + "\n"));
+        SwingUtilities.invokeLater(() -> {
+            statusArea.append(message + "\n");
+            statusArea.setCaretPosition(statusArea.getDocument().getLength());
+        });
     }
 }
