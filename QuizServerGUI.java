@@ -20,12 +20,20 @@ public class QuizServerGUI extends JFrame {
         clientScoreLabels = new HashMap<>();
         clientProgressLabels = new HashMap<>();
 
+        // Status area with scroll pane
         statusArea = new JTextArea();
         statusArea.setEditable(false);
-        add(new JScrollPane(statusArea), BorderLayout.CENTER);
+        statusArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        statusArea.setBackground(Color.BLACK);
+        statusArea.setForeground(Color.GREEN);
+        JScrollPane statusScrollPane = new JScrollPane(statusArea);
+        statusScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        add(statusScrollPane, BorderLayout.CENTER);
 
+        // Client panel with titled border
         clientPanel = new JPanel();
         clientPanel.setLayout(new GridLayout(0, 4, 10, 10));
+        clientPanel.setBorder(BorderFactory.createTitledBorder("Client Status"));
         add(new JScrollPane(clientPanel), BorderLayout.SOUTH);
 
         setVisible(true);
