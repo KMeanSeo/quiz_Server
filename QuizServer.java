@@ -99,6 +99,12 @@ public class QuizServer {
         });
     }
 
+    public synchronized void appendStatusMessage(String message) {
+        SwingUtilities.invokeLater(() -> {
+            serverGUI.appendStatusMessage(message);
+        });
+    }
+
     public static void main(String[] args) {
         new QuizServer();
     }
@@ -138,6 +144,7 @@ public class QuizServer {
                 String request;
                 while ((request = in.readLine()) != null) {
                     System.out.println("Received from client " + clientId + ": " + request);
+                    server.appendStatusMessage("Received from client " + clientId + ": " + request);
 
                     if (request.equals("CONNECT|SERVER")) {
                         out.println("200|Connection_Accepted|" + selectedQuestions.size());
@@ -150,12 +157,14 @@ public class QuizServer {
                 }
             } catch (IOException e) {
                 System.err.println("Error communicating with client " + clientId + ": " + e.getMessage());
+                server.appendStatusMessage("Error communicating with client " + clientId + ": " + e.getMessage());
             } finally {
                 try {
                     socket.close();
                     server.updateClientStatus(clientId, "Disconnected");
                 } catch (IOException e) {
                     System.err.println("Error closing client socket: " + e.getMessage());
+                    server.appendStatusMessage("Error closing client socket: " + e.getMessage());
                 }
             }
         }
