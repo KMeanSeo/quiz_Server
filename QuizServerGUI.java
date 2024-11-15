@@ -20,12 +20,10 @@ public class QuizServerGUI extends JFrame {
         clientScoreLabels = new HashMap<>();
         clientProgressLabels = new HashMap<>();
 
-        // Initialize the text area to display server messages
         statusArea = new JTextArea();
         statusArea.setEditable(false);
         add(new JScrollPane(statusArea), BorderLayout.CENTER);
 
-        // Create a panel for displaying client statuses, scores, and progress
         clientPanel = new JPanel();
         clientPanel.setLayout(new GridLayout(0, 4, 10, 10));
         add(new JScrollPane(clientPanel), BorderLayout.SOUTH);
@@ -54,34 +52,28 @@ public class QuizServerGUI extends JFrame {
     public void updateClientStatus(String clientId, String status) {
         SwingUtilities.invokeLater(() -> {
             JLabel statusLabel = clientStatusLabels.get(clientId);
-            if (statusLabel != null) {
+            if (statusLabel != null)
                 statusLabel.setText(status);
-            }
         });
     }
 
     public void updateClientScore(String clientId, int score) {
         SwingUtilities.invokeLater(() -> {
             JLabel scoreLabel = clientScoreLabels.get(clientId);
-            if (scoreLabel != null) {
+            if (scoreLabel != null)
                 scoreLabel.setText(String.valueOf(score));
-            }
         });
     }
 
     public void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
         SwingUtilities.invokeLater(() -> {
             JLabel progressLabel = clientProgressLabels.get(clientId);
-            if (progressLabel != null) {
+            if (progressLabel != null)
                 progressLabel.setText(currentQuestion + "/" + totalQuestions);
-            }
         });
     }
 
     public void appendStatusMessage(String message) {
-        SwingUtilities.invokeLater(() -> {
-            statusArea.append(message + "\n");
-            statusArea.setCaretPosition(statusArea.getDocument().getLength());
-        });
+        SwingUtilities.invokeLater(() -> statusArea.append(message + "\n"));
     }
 }
