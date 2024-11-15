@@ -4,25 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class QuizServerGUI extends JFrame {
-    private QuizServer server; // 서버 참조 추가
     private JTextArea statusArea;
     private JPanel clientPanel;
     private Map<String, JLabel> clientStatusLabels;
     private Map<String, JLabel> clientScoreLabels;
     private Map<String, JLabel> clientProgressLabels;
 
-    // QuizServer 인스턴스를 인자로 받는 생성자 추가
     public QuizServerGUI(QuizServer server) {
-        this.server = server; // 서버 참조 초기화
-        initializeGUI(); // GUI 초기화 메서드 호출
-    }
-
-    // 기본 생성자
-    public QuizServerGUI() {
-        initializeGUI(); // GUI 초기화 메서드 호출
-    }
-
-    private void initializeGUI() {
         setTitle("Quiz Server");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -95,9 +83,5 @@ public class QuizServerGUI extends JFrame {
             statusArea.append(message + "\n");
             statusArea.setCaretPosition(statusArea.getDocument().getLength());
         });
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(QuizServerGUI::new);
     }
 }

@@ -173,6 +173,7 @@ public class QuizServer {
         private void handleQuizRequest() {
             if (currentQuestionIndex >= selectedQuestions.size()) {
                 out.println("204|Final_Score|" + score);
+                server.updateClientStatus(clientId, "Quiz Completed");
                 System.out.println("Sent final score to client " + clientId + ": " + score);
                 return;
             }
