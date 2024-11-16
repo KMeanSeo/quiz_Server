@@ -3,143 +3,228 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 public class QuizClientGUI extends JFrame {
-    private QuizClient quizClient;
+
     private JTextArea chatArea;
     private JTextField inputField;
     private JButton submitButton;
-    private JLabel serverStatusLabel;
+    private JLabel questionNumberLabel;
+    private JProgressBar progressBar;
+    private QuizClient quizClient;
+    private int currentQuestionNumber = 0;
+    private int totalQuestions = 0;
 
+    // constructor initializes GUI
     public QuizClientGUI() {
-        try {
-            quizClient = new QuizClient();
-            initializeGUI();
-            connectToServer();
-            requestQuiz();
-        } catch (IOException e) {
-            showError("Error connecting to server.");
-            serverStatusLabel.setText("Server Status: Disconnected");
-        }
-    }
-
-    private void initializeGUI() {
-        setTitle("GPT-like Quiz Client");
-        setSize(500, 400);
+        setTitle("Quiz Client");
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10, 10));
 
-        // 채팅 영역
+        // main panel
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(40, 40, 40));
+        add(mainPanel);
+
+        // chat area
         chatArea = new JTextArea();
         chatArea.setEditable(false);
+        chatArea.setFont(new Font("Consolas", Font.PLAIN, 16));
+        chatArea.setBackground(new Color(30, 30, 30));
+        chatArea.setForeground(new Color(220, 220, 220));
         chatArea.setLineWrap(true);
         chatArea.setWrapStyleWord(true);
+        chatArea.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(100, 149, 237)),
+                "Quiz Messages",
+                0,
+                0,
+                new Font("Arial", Font.BOLD, 16),
+                new Color(173, 216, 230)));
+        JScrollPane chatScrollPane = new JScrollPane(chatArea);
+        chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        mainPanel.add(chatScrollPane, BorderLayout.CENTER);
 
-        // 입력 필드 및 버튼 설정
-        inputField = new JTextField(30);
-        submitButton = new JButton("Send");
-        serverStatusLabel = new JLabel("Server Status: Disconnected", SwingConstants.RIGHT);
+        // input panel
+        JPanel inputPanel = new JPanel(new BorderLayout(10, 10));
+        inputPanel.setBackground(new Color(50, 50, 50));
+        inputPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(70, 130, 180)),
+                "Answer Input",
+                0,
+                0,
+                new Font("Arial", Font.BOLD, 14),
+                Color.WHITE));
 
-        // 패널 설정
-        JPanel chatPanel = new JPanel(new BorderLayout());
-        chatPanel.add(new JScrollPane(chatArea), BorderLayout.CENTER);
-
-        JPanel inputPanel = new JPanel(new BorderLayout());
+        // input field
+        inputField = new JTextField();
+        inputField.setFont(new Font("Consolas", Font.PLAIN, 16));
+        inputField.setBackground(new Color(40, 40, 40));
+        inputField.setForeground(Color.WHITE);
+        inputField.setCaretColor(new Color(135, 206, 250));
+        inputField.setEnabled(false);
         inputPanel.add(inputField, BorderLayout.CENTER);
+
+        // submit button
+        submitButton = new JButton("Submit");
+        submitButton.setFont(new Font("Arial", Font.BOLD, 14));
+        submitButton.setBackground(new Color(70, 130, 180));
+        submitButton.setForeground(Color.BLACK);
+        submitButton.setEnabled(false);
+        submitButton.setFocusPainted(false);
+        submitButton.addActionListener(new SubmitAnswerListener());
         inputPanel.add(submitButton, BorderLayout.EAST);
 
-        // 레이아웃 구성
-        chatPanel.add(inputPanel, BorderLayout.SOUTH);
-        chatPanel.add(serverStatusLabel, BorderLayout.PAGE_END);
-        add(chatPanel);
+        mainPanel.add(inputPanel, BorderLayout.SOUTH);
 
-        submitButton.addActionListener(new SubmitAnswerListener());
-        inputField.addActionListener(new SubmitAnswerListener());
+        // header panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(50, 50, 50));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 텍스트 필드 상태 변경 감지
-        inputField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                toggleSubmitButton();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                toggleSubmitButton();
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                toggleSubmitButton();
-            }
-            private void toggleSubmitButton() {
-                submitButton.setEnabled(!inputField.getText().trim().isEmpty());
-            }
-        });
+        // question number label
+        questionNumberLabel = new JLabel("Question: 0/0");
+        questionNumberLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        questionNumberLabel.setForeground(new Color(135, 206, 250));
+        headerPanel.add(questionNumberLabel, BorderLayout.WEST);
+
+        // progress bar
+        progressBar = new JProgressBar(0, 10);
+        progressBar.setStringPainted(false);
+        progressBar.setForeground(new Color(50, 205, 50));
+        progressBar.setBackground(new Color(30, 30, 30));
+        headerPanel.add(progressBar, BorderLayout.CENTER);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+
+        connectToServer();
     }
 
+    // connect to server
     private void connectToServer() {
         try {
-            String response = quizClient.connectToServer();
-            if (response != null && response.startsWith("200|Connection_Accepted")) {
-                serverStatusLabel.setText("Server Status: Connected");
-                chatArea.append("Connected to server.\n\n");
-                inputField.setEnabled(true);
+            quizClient = new QuizClient();
+            String connectResponse = quizClient.connectToServer();
+
+            if (connectResponse.startsWith("200|Connection_Accepted")) {
+                totalQuestions = Integer.parseInt(connectResponse.split("\\|")[2]);
+                progressBar.setMaximum(totalQuestions);
+                startQuiz();
             } else {
-                serverStatusLabel.setText("Server Status: Connection Failed");
+                inputField.setEnabled(false);
+                submitButton.setEnabled(false);
             }
         } catch (IOException e) {
-            showError("Error during connection.");
+            showError("Failed to connect to the server.", true);
+            inputField.setEnabled(false);
+            submitButton.setEnabled(false);
         }
     }
 
+    // start the quiz
+    private void startQuiz() {
+        inputField.setEnabled(true);
+        submitButton.setEnabled(true);
+        requestQuiz();
+    }
+
+    // requests quiz question from server
     private void requestQuiz() {
         try {
-            String quizResponse = quizClient.requestQuiz();
-            if (quizResponse != null && quizResponse.startsWith("201|Quiz_Content")) {
-                String[] parts = quizResponse.split("\\|", 4);
-                if (parts.length >= 4) {
-                    chatArea.append("GPT: " + parts[2] + "\nProgress: (" + parts[3] + ")\n\n");
-                    inputField.setEnabled(true);
-                    inputField.requestFocus();
-                } else {
-                    chatArea.append("GPT: Error: Incomplete question response.\n");
-                }
-            }
+            String response = quizClient.requestQuiz();
+            processResponse(response);
         } catch (IOException e) {
-            showError("Error requesting quiz question.");
+            showError("Failed to request quiz from the server.", false);
         }
     }
 
+    // send user answer to server
     private void sendAnswer() {
-        String userAnswer = inputField.getText().trim();
-        if (!userAnswer.isEmpty()) {
-            chatArea.append("You: " + userAnswer + "\n");
+        String answer = inputField.getText();
+
+        if (answer.isEmpty()) {
+            showError("Answer cannot be empty.", false);
+            return;
+        }
+
+        chatArea.append("You: " + answer + "\n");
+
+        try {
+            String response = quizClient.sendAnswer(answer);
+            processResponse(response);
+        } catch (IOException e) {
+            showError("Failed to send answer to the server.", false);
+        }
+
+        inputField.setText("");
+    }
+
+    // processes server response
+    protected void processResponse(String response) {
+        if (response == null || response.isEmpty()) {
+            chatArea.append("Server: No response received.\n");
+            return;
+        }
+
+        if (response.startsWith("301|Quiz_Content")) {
+            String[] parts = response.split("\\|");
+            String question = parts[2];
+            currentQuestionNumber = Integer.parseInt(parts[3].split("/")[0]);
+            chatArea.append("Question: " + question + "\n");
+            questionNumberLabel.setText("Question: " + currentQuestionNumber + "/" + totalQuestions);
+            progressBar.setValue(currentQuestionNumber);
+
+        } else if (response.startsWith("401|Correct_Answer")) {
+            chatArea.append("Server: Correct Answer!\n\n");
+            requestQuiz();
+
+        } else if (response.startsWith("402|Wrong_Answer")) {
+            chatArea.append("Server: Wrong Answer.\n\n");
+            requestQuiz();
+
+        } else if (response.startsWith("501|Final_Score")) {
+            chatArea.append("Server: Quiz finished. Final Score: " + response.split("\\|")[2] + "\n\n");
+            submitButton.setEnabled(false);
+            inputField.setEnabled(false);
+            progressBar.setValue(totalQuestions);
+
+            // Display a modal dialog with a single "OK" button
+            JOptionPane.showMessageDialog(this,
+                    "Your final score is: " + response.split("\\|")[2] + "\nThe quiz is now complete.",
+                    "Final Score",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Disconnect the server after the dialog is closed
+            disconnectServer();
+            System.exit(0);
+        } else {
+            chatArea.append("Server: " + response + "\n");
+        }
+    }
+
+    // Disconnects from the server
+    private void disconnectServer() {
+        if (quizClient != null) {
             try {
-                String answerResponse = quizClient.sendAnswer(userAnswer);
-                if (answerResponse != null) {
-                    if (answerResponse.startsWith("202|Correct_Answer")) {
-                        chatArea.append("GPT: Correct Answer!\n\n");
-                    } else if (answerResponse.startsWith("203|Wrong_Answer")) {
-                        chatArea.append("GPT: Wrong Answer.\n\n");
-                    } else if (answerResponse.startsWith("204|Final_Score")) {
-                        chatArea.append("GPT: Quiz finished. Final Score: " + answerResponse.split("\\|")[2] + "\n\n");
-                        submitButton.setEnabled(false);
-                        inputField.setEnabled(false);
-                    }
-                }
-                inputField.setText("");
-                requestQuiz();
+                quizClient.closeConnection();
             } catch (IOException e) {
-                showError("Error sending answer.");
+                showError("Failed to disconnect from the server.", false);
             }
         }
     }
 
-    private void showError(String message) {
+    // error message
+    private void showError(String message, boolean exitOnClose) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+        if (exitOnClose) {
+            System.exit(0);
+        }
     }
 
+    // listener for submit button
     private class SubmitAnswerListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -147,6 +232,7 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // main method launch client
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             QuizClientGUI clientGUI = new QuizClientGUI();
