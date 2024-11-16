@@ -5,129 +5,152 @@ import java.io.IOException;
 import javax.swing.*;
 
 public class QuizClientGUI extends JFrame {
-    // GUI components
     private JTextArea chatArea;
     private JTextField inputField;
     private JButton submitButton;
     private JLabel questionNumberLabel;
-    private JProgressBar progressBar; // Progress bar for tracking quiz progress
-
-    // Instance of the QuizClient class to handle server communication
+    private JProgressBar progressBar;
     private QuizClient quizClient;
-
-    // Variables to track current and total questions
     private int currentQuestionNumber = 0;
     private int totalQuestions = 0;
 
-    // Constructor for setting up the GUI and initializing the connection
     public QuizClientGUI() {
-        // Set window title, size, and default close operation
         setTitle("Quiz Client");
-        setSize(400, 350);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10, 10));
 
-        // Create and configure chat area to display server messages
+        // Main panel with padding
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(40, 40, 40));
+        add(mainPanel);
+
+        // Chat area
         chatArea = new JTextArea();
         chatArea.setEditable(false);
-        add(new JScrollPane(chatArea), BorderLayout.CENTER);
+        chatArea.setFont(new Font("Consolas", Font.PLAIN, 16));
+        chatArea.setBackground(new Color(30, 30, 30));
+        chatArea.setForeground(new Color(220, 220, 220));
+        chatArea.setLineWrap(true);
+        chatArea.setWrapStyleWord(true);
+        chatArea.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(100, 149, 237)),
+                "Quiz Messages",
+                0,
+                0,
+                new Font("Arial", Font.BOLD, 16),
+                new Color(173, 216, 230)));
+        JScrollPane chatScrollPane = new JScrollPane(chatArea);
+        chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        mainPanel.add(chatScrollPane, BorderLayout.CENTER);
 
-        // Create panel for user input
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new BorderLayout());
+        // Input panel
+        JPanel inputPanel = new JPanel(new BorderLayout(10, 10));
+        inputPanel.setBackground(new Color(50, 50, 50));
+        inputPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(70, 130, 180)),
+                "Answer Input",
+                0,
+                0,
+                new Font("Arial", Font.BOLD, 14),
+                Color.WHITE));
 
-        // Create text field for entering answers
+        // Input field
         inputField = new JTextField();
-        inputField.setEnabled(false); // Initially disabled
+        inputField.setFont(new Font("Consolas", Font.PLAIN, 16));
+        inputField.setBackground(new Color(40, 40, 40));
+        inputField.setForeground(Color.WHITE);
+        inputField.setCaretColor(new Color(135, 206, 250));
+        inputField.setEnabled(false);
         inputPanel.add(inputField, BorderLayout.CENTER);
 
-        // Create button to submit answer
-        submitButton = new JButton("Submit Answer");
-        submitButton.setEnabled(false); // Initially disabled
+        // Submit button
+        submitButton = new JButton("Submit");
+        submitButton.setFont(new Font("Arial", Font.BOLD, 14));
+        submitButton.setBackground(new Color(70, 130, 180));
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setEnabled(false);
+        submitButton.setFocusPainted(false); // Disable focus outline for better appearance
         submitButton.addActionListener(new SubmitAnswerListener());
         inputPanel.add(submitButton, BorderLayout.EAST);
 
-        // Label to show the current question number
+        mainPanel.add(inputPanel, BorderLayout.SOUTH);
+
+        // Header panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(50, 50, 50));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Question number label
         questionNumberLabel = new JLabel("Question: 0/0");
-        inputPanel.add(questionNumberLabel, BorderLayout.NORTH);
+        questionNumberLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        questionNumberLabel.setForeground(new Color(135, 206, 250));
+        headerPanel.add(questionNumberLabel, BorderLayout.WEST);
 
-        // Progress bar to show quiz progress
-        progressBar = new JProgressBar(0, 10); // Default total questions
+        // Progress bar
+        progressBar = new JProgressBar(0, 10);
         progressBar.setStringPainted(true);
-        inputPanel.add(progressBar, BorderLayout.SOUTH);
+        progressBar.setForeground(new Color(50, 205, 50));
+        progressBar.setBackground(new Color(30, 30, 30));
+        headerPanel.add(progressBar, BorderLayout.CENTER);
 
-        // Add input panel to the bottom of the frame
-        add(inputPanel, BorderLayout.SOUTH);
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // Establish connection to the server
         connectToServer();
     }
 
-    // Method to establish connection to the server
     private void connectToServer() {
         try {
             quizClient = new QuizClient();
             String connectResponse = quizClient.connectToServer();
             chatArea.append("Server: " + connectResponse + "\n");
 
-            // If connection is accepted, enable input and request the first quiz
             if (connectResponse.startsWith("200|Connection_Accepted")) {
                 inputField.setEnabled(true);
                 submitButton.setEnabled(true);
                 totalQuestions = Integer.parseInt(connectResponse.split("\\|")[2]);
-                progressBar.setMaximum(totalQuestions); // Set progress bar max to total questions
+                progressBar.setMaximum(totalQuestions);
                 requestQuiz();
             } else {
-                // If connection is not accepted, disable input and submit button
                 inputField.setEnabled(false);
                 submitButton.setEnabled(false);
             }
         } catch (IOException e) {
-            // Show error message if connection fails
             showError("Failed to connect to the server.");
             inputField.setEnabled(false);
             submitButton.setEnabled(false);
         }
     }
 
-    // Method to request a quiz question from the server
     private void requestQuiz() {
         try {
-            // Request quiz content from the server
             String response = quizClient.requestQuiz();
-            System.out.println("Requested quiz from server");
             processResponse(response);
         } catch (IOException e) {
-            // Show error if quiz request fails
             showError("Failed to request quiz from the server.");
         }
     }
 
-    // Method to send the user's answer to the server
     private void sendAnswer() {
         String answer = inputField.getText();
 
-        // Check if answer is empty
         if (answer.isEmpty()) {
             showError("Answer cannot be empty.");
             return;
         }
 
         try {
-            // Send the user's answer to the server
             String response = quizClient.sendAnswer(answer);
-            System.out.println("Sent answer to server: " + answer);
             processResponse(response);
         } catch (IOException e) {
-            // Show error if sending answer fails
             showError("Failed to send answer to the server.");
         }
 
-        // Clear input field after sending answer
         inputField.setText("");
     }
 
-    // Method to process the server's response
     protected void processResponse(String response) {
         if (response == null || response.isEmpty()) {
             chatArea.append("Server: No response received.\n");
@@ -135,62 +158,39 @@ public class QuizClientGUI extends JFrame {
         }
 
         if (response.startsWith("201|Quiz_Content")) {
-            // If the server sends a new quiz question, update UI with the question
             String[] parts = response.split("\\|");
             String question = parts[2];
             currentQuestionNumber = Integer.parseInt(parts[3].split("/")[0]);
             chatArea.append("Question: " + question + "\n");
-
-            // Update question number label and progress bar
             questionNumberLabel.setText("Question: " + currentQuestionNumber + "/" + totalQuestions);
             progressBar.setValue(currentQuestionNumber);
 
         } else if (response.startsWith("202|Correct_Answer")) {
-            // If the answer is correct, display a message and request the next quiz
             chatArea.append("Server: Correct Answer!\n\n");
             requestQuiz();
 
         } else if (response.startsWith("203|Wrong_Answer")) {
-            // If the answer is wrong, display a message and request the next quiz
             chatArea.append("Server: Wrong Answer.\n\n");
             requestQuiz();
 
         } else if (response.startsWith("204|Final_Score")) {
-            // If the quiz is finished, show the final score and exit prompt
             chatArea.append("Server: Quiz finished. Final Score: " + response.split("\\|")[2] + "\n\n");
             submitButton.setEnabled(false);
             inputField.setEnabled(false);
-            progressBar.setValue(totalQuestions); // Complete progress bar
-
-            // Show final score and ask if the user wants to exit
-            String score = response.split("\\|")[2];
-            JOptionPane.showMessageDialog(this, "Your final score is: " + score, "Final Score",
+            progressBar.setValue(totalQuestions);
+            JOptionPane.showMessageDialog(this, "Your final score is: " + response.split("\\|")[2], "Final Score",
                     JOptionPane.INFORMATION_MESSAGE);
-
-            int result = JOptionPane.showConfirmDialog(this,
-                    "Do you want to disconnect from the server and close the program?", "Exit Confirmation",
-                    JOptionPane.YES_NO_OPTION);
-            if (result == JOptionPane.YES_OPTION) {
-                try {
-                    quizClient.closeConnection(); // Disconnect from the server
-                } catch (IOException e) {
-                    showError("Failed to disconnect: " + e.getMessage());
-                }
-                System.exit(0); // Exit the program
-            }
+            System.exit(0);
         } else {
-            // If response is unrecognized, just display it in chat area
             chatArea.append("Server: " + response + "\n");
         }
     }
 
-    // Method to display error messages in a dialog box and exit on confirmation
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
-        System.exit(0); // Close the program after showing the error message
+        System.exit(0);
     }
 
-    // Listener for the "Submit Answer" button
     private class SubmitAnswerListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -198,7 +198,6 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
-    // Main method to launch the application
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             QuizClientGUI clientGUI = new QuizClientGUI();

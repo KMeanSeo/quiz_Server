@@ -3,7 +3,7 @@ import java.net.*;
 
 public class QuizClient {
     // Server address and port number for the connection
-    private static final String SERVER_ADDRESS = "192.168.1.237"; // 서버 IP
+    private static final String SERVER_ADDRESS = "192.168.1.10"; // 서버 IP
     private static final int PORT = 7777;
 
     // Socket, input and output streams for communication
