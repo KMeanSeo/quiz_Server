@@ -109,21 +109,7 @@ public class QuizClientGUI extends JFrame {
             if (connectResponse.startsWith("200|Connection_Accepted")) {
                 totalQuestions = Integer.parseInt(connectResponse.split("\\|")[2]);
                 progressBar.setMaximum(totalQuestions);
-
-                SwingUtilities.invokeLater(() -> {
-                    int response = JOptionPane.showConfirmDialog(
-                            this,
-                            "서버에 연결 성공했습니다. 퀴즈를 시작하시겠습니까?",
-                            "서버 연결 성공",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.INFORMATION_MESSAGE);
-
-                    if (response == JOptionPane.YES_OPTION) {
-                        startQuiz();
-                    } else {
-                        System.exit(0);
-                    }
-                });
+                startQuiz();
             } else {
                 inputField.setEnabled(false);
                 submitButton.setEnabled(false);

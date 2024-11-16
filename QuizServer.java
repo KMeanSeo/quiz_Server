@@ -182,7 +182,7 @@ public class QuizServer {
 
         private void handleQuizRequest() {
             if (currentQuestionIndex >= selectedQuestions.size()) {
-                int finalScore = (int) ((score / (double) selectedQuestions.size()) * 100);
+                String finalScore = score + "/" + selectedQuestions.size();
                 out.println("204|Final_Score|" + finalScore);
                 server.appendStatusMessage("Sent to client " + clientId + ": 204|Final_Score|" + finalScore);
                 return;
