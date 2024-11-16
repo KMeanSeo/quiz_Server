@@ -190,14 +190,29 @@ public class QuizClientGUI extends JFrame {
             submitButton.setEnabled(false);
             inputField.setEnabled(false);
             progressBar.setValue(totalQuestions);
-            int result = JOptionPane.showConfirmDialog(this,
-                    "Your final score is: " + response.split("\\|")[2] + "\nDo you want to exit?", "Final Score",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
-            if (result == JOptionPane.OK_OPTION) {
-                System.exit(0);
-            }
+
+            // Display a modal dialog with a single "OK" button
+            JOptionPane.showMessageDialog(this,
+                    "Your final score is: " + response.split("\\|")[2] + "\nThe quiz is now complete.",
+                    "Final Score",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Disconnect the server after the dialog is closed
+            disconnectServer();
+            System.exit(0);
         } else {
             chatArea.append("Server: " + response + "\n");
+        }
+    }
+
+    // Disconnects from the server
+    private void disconnectServer() {
+        if (quizClient != null) {
+            try {
+                quizClient.closeConnection();
+            } catch (IOException e) {
+                showError("Failed to disconnect from the server.", false);
+            }
         }
     }
 
