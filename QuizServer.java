@@ -18,15 +18,16 @@ public class QuizServer {
         initializeServer();
     }
 
-    // loads the server address and port from address.dat file
+    // loads the server address and port from server_info.dat file
     private void loadServerAddress() {
-        try (BufferedReader br = new BufferedReader(new FileReader("address.dat"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader("server_info.dat"))) {
             serverAddress = br.readLine().trim();
             port = Integer.parseInt(br.readLine().trim());
             System.out.println("Loaded server address: " + serverAddress + ", port: " + port);
         } catch (IOException e) {
-            System.err.println("Failed to load server address from address.dat");
-            e.printStackTrace();
+            System.err.println("Failed to load server address from address.dat, defaulting to localhost:1234");
+            serverAddress = "localhost";
+            port = 1234;
         }
     }
 
