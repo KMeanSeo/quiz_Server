@@ -70,7 +70,7 @@ public class QuizClientGUI extends JFrame {
         submitButton = new JButton("Submit");
         submitButton.setFont(new Font("Arial", Font.BOLD, 14));
         submitButton.setBackground(new Color(70, 130, 180));
-        submitButton.setForeground(Color.WHITE);
+        submitButton.setForeground(Color.BLACK);
         submitButton.setEnabled(false);
         submitButton.setFocusPainted(false); // Disable focus outline for better appearance
         submitButton.addActionListener(new SubmitAnswerListener());
@@ -91,7 +91,7 @@ public class QuizClientGUI extends JFrame {
 
         // Progress bar
         progressBar = new JProgressBar(0, 10);
-        progressBar.setStringPainted(true);
+        progressBar.setStringPainted(false);
         progressBar.setForeground(new Color(50, 205, 50));
         progressBar.setBackground(new Color(30, 30, 30));
         headerPanel.add(progressBar, BorderLayout.CENTER);
@@ -105,23 +105,40 @@ public class QuizClientGUI extends JFrame {
         try {
             quizClient = new QuizClient();
             String connectResponse = quizClient.connectToServer();
-            chatArea.append("Server: " + connectResponse + "\n");
 
             if (connectResponse.startsWith("200|Connection_Accepted")) {
-                inputField.setEnabled(true);
-                submitButton.setEnabled(true);
                 totalQuestions = Integer.parseInt(connectResponse.split("\\|")[2]);
                 progressBar.setMaximum(totalQuestions);
-                requestQuiz();
+
+                SwingUtilities.invokeLater(() -> {
+                    int response = JOptionPane.showConfirmDialog(
+                            this,
+                            "서버에 연결 성공했습니다. 퀴즈를 시작하시겠습니까?",
+                            "서버 연결 성공",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    if (response == JOptionPane.YES_OPTION) {
+                        startQuiz();
+                    } else {
+                        System.exit(0);
+                    }
+                });
             } else {
                 inputField.setEnabled(false);
                 submitButton.setEnabled(false);
             }
         } catch (IOException e) {
-            showError("Failed to connect to the server.");
+            showError("Failed to connect to the server.", true);
             inputField.setEnabled(false);
             submitButton.setEnabled(false);
         }
+    }
+
+    private void startQuiz() {
+        inputField.setEnabled(true);
+        submitButton.setEnabled(true);
+        requestQuiz();
     }
 
     private void requestQuiz() {
@@ -129,7 +146,7 @@ public class QuizClientGUI extends JFrame {
             String response = quizClient.requestQuiz();
             processResponse(response);
         } catch (IOException e) {
-            showError("Failed to request quiz from the server.");
+            showError("Failed to request quiz from the server.", false);
         }
     }
 
@@ -137,15 +154,17 @@ public class QuizClientGUI extends JFrame {
         String answer = inputField.getText();
 
         if (answer.isEmpty()) {
-            showError("Answer cannot be empty.");
+            showError("Answer cannot be empty.", false);
             return;
         }
+
+        chatArea.append("You: " + answer + "\n");
 
         try {
             String response = quizClient.sendAnswer(answer);
             processResponse(response);
         } catch (IOException e) {
-            showError("Failed to send answer to the server.");
+            showError("Failed to send answer to the server.", false);
         }
 
         inputField.setText("");
@@ -178,17 +197,22 @@ public class QuizClientGUI extends JFrame {
             submitButton.setEnabled(false);
             inputField.setEnabled(false);
             progressBar.setValue(totalQuestions);
-            JOptionPane.showMessageDialog(this, "Your final score is: " + response.split("\\|")[2], "Final Score",
-                    JOptionPane.INFORMATION_MESSAGE);
-            System.exit(0);
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Your final score is: " + response.split("\\|")[2] + "\nDo you want to exit?", "Final Score",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+            if (result == JOptionPane.OK_OPTION) {
+                System.exit(0);
+            }
         } else {
             chatArea.append("Server: " + response + "\n");
         }
     }
 
-    private void showError(String message) {
+    private void showError(String message, boolean exitOnClose) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
-        System.exit(0);
+        if (exitOnClose) {
+            System.exit(0);
+        }
     }
 
     private class SubmitAnswerListener implements ActionListener {

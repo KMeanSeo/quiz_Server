@@ -9,7 +9,6 @@ public class QuizServerGUI extends JFrame {
     private Map<String, JLabel> clientStatusLabels;
     private Map<String, JLabel> clientScoreLabels;
     private Map<String, JLabel> clientProgressLabels;
-    private Map<String, JTextArea> clientLogs;
 
     public QuizServerGUI(QuizServer server) {
         setTitle("Quiz Server");
@@ -21,7 +20,6 @@ public class QuizServerGUI extends JFrame {
         clientStatusLabels = new HashMap<>();
         clientScoreLabels = new HashMap<>();
         clientProgressLabels = new HashMap<>();
-        clientLogs = new HashMap<>();
 
         // Status area (Top)
         statusArea = new JTextArea();
@@ -102,24 +100,6 @@ public class QuizServerGUI extends JFrame {
         gbc.gridx = 3;
         clientPanel.add(progressLabel, gbc);
 
-        // Client-specific log area
-        JTextArea clientLogArea = new JTextArea(5, 30);
-        clientLogArea.setEditable(false);
-        clientLogArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        clientLogArea.setBackground(new Color(40, 40, 40));
-        clientLogArea.setForeground(Color.LIGHT_GRAY);
-        clientLogArea.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(70, 70, 70)),
-                "Logs for " + clientId,
-                0,
-                0,
-                new Font("Arial", Font.BOLD, 12),
-                Color.LIGHT_GRAY));
-        clientLogs.put(clientId, clientLogArea);
-
-        gbc.gridx = 4;
-        clientPanel.add(new JScrollPane(clientLogArea), gbc);
-
         refreshClientPanel();
     }
 
@@ -147,16 +127,6 @@ public class QuizServerGUI extends JFrame {
             JLabel progressLabel = clientProgressLabels.get(clientId);
             if (progressLabel != null) {
                 progressLabel.setText("Progress: " + currentQuestion + "/" + totalQuestions);
-            }
-        });
-    }
-
-    public void logClientMessage(String clientId, String message) {
-        SwingUtilities.invokeLater(() -> {
-            JTextArea clientLogArea = clientLogs.get(clientId);
-            if (clientLogArea != null) {
-                clientLogArea.append(message + "\n");
-                clientLogArea.setCaretPosition(clientLogArea.getDocument().getLength());
             }
         });
     }
