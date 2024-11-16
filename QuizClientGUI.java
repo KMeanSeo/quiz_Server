@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 public class QuizClientGUI extends JFrame {
+
     private JTextArea chatArea;
     private JTextField inputField;
     private JButton submitButton;
@@ -14,6 +15,7 @@ public class QuizClientGUI extends JFrame {
     private int currentQuestionNumber = 0;
     private int totalQuestions = 0;
 
+    // constructor initializes GUI
     public QuizClientGUI() {
         setTitle("Quiz Client");
         setSize(700, 500);
@@ -21,13 +23,13 @@ public class QuizClientGUI extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        // Main panel with padding
+        // main panel
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.setBackground(new Color(40, 40, 40));
         add(mainPanel);
 
-        // Chat area
+        // chat area
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setFont(new Font("Consolas", Font.PLAIN, 16));
@@ -46,7 +48,7 @@ public class QuizClientGUI extends JFrame {
         chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         mainPanel.add(chatScrollPane, BorderLayout.CENTER);
 
-        // Input panel
+        // input panel
         JPanel inputPanel = new JPanel(new BorderLayout(10, 10));
         inputPanel.setBackground(new Color(50, 50, 50));
         inputPanel.setBorder(BorderFactory.createTitledBorder(
@@ -57,7 +59,7 @@ public class QuizClientGUI extends JFrame {
                 new Font("Arial", Font.BOLD, 14),
                 Color.WHITE));
 
-        // Input field
+        // input field
         inputField = new JTextField();
         inputField.setFont(new Font("Consolas", Font.PLAIN, 16));
         inputField.setBackground(new Color(40, 40, 40));
@@ -66,30 +68,30 @@ public class QuizClientGUI extends JFrame {
         inputField.setEnabled(false);
         inputPanel.add(inputField, BorderLayout.CENTER);
 
-        // Submit button
+        // submit button
         submitButton = new JButton("Submit");
         submitButton.setFont(new Font("Arial", Font.BOLD, 14));
         submitButton.setBackground(new Color(70, 130, 180));
         submitButton.setForeground(Color.BLACK);
         submitButton.setEnabled(false);
-        submitButton.setFocusPainted(false); // Disable focus outline for better appearance
+        submitButton.setFocusPainted(false);
         submitButton.addActionListener(new SubmitAnswerListener());
         inputPanel.add(submitButton, BorderLayout.EAST);
 
         mainPanel.add(inputPanel, BorderLayout.SOUTH);
 
-        // Header panel
+        // header panel
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(50, 50, 50));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Question number label
+        // question number label
         questionNumberLabel = new JLabel("Question: 0/0");
         questionNumberLabel.setFont(new Font("Arial", Font.BOLD, 16));
         questionNumberLabel.setForeground(new Color(135, 206, 250));
         headerPanel.add(questionNumberLabel, BorderLayout.WEST);
 
-        // Progress bar
+        // progress bar
         progressBar = new JProgressBar(0, 10);
         progressBar.setStringPainted(false);
         progressBar.setForeground(new Color(50, 205, 50));
@@ -101,6 +103,7 @@ public class QuizClientGUI extends JFrame {
         connectToServer();
     }
 
+    // connect to server
     private void connectToServer() {
         try {
             quizClient = new QuizClient();
@@ -121,12 +124,14 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // start the quiz
     private void startQuiz() {
         inputField.setEnabled(true);
         submitButton.setEnabled(true);
         requestQuiz();
     }
 
+    // requests quiz question from server
     private void requestQuiz() {
         try {
             String response = quizClient.requestQuiz();
@@ -136,6 +141,7 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // send user answer to server
     private void sendAnswer() {
         String answer = inputField.getText();
 
@@ -156,13 +162,14 @@ public class QuizClientGUI extends JFrame {
         inputField.setText("");
     }
 
+    // processes server response
     protected void processResponse(String response) {
         if (response == null || response.isEmpty()) {
             chatArea.append("Server: No response received.\n");
             return;
         }
 
-        if (response.startsWith("201|Quiz_Content")) {
+        if (response.startsWith("301|Quiz_Content")) {
             String[] parts = response.split("\\|");
             String question = parts[2];
             currentQuestionNumber = Integer.parseInt(parts[3].split("/")[0]);
@@ -170,15 +177,15 @@ public class QuizClientGUI extends JFrame {
             questionNumberLabel.setText("Question: " + currentQuestionNumber + "/" + totalQuestions);
             progressBar.setValue(currentQuestionNumber);
 
-        } else if (response.startsWith("202|Correct_Answer")) {
+        } else if (response.startsWith("401|Correct_Answer")) {
             chatArea.append("Server: Correct Answer!\n\n");
             requestQuiz();
 
-        } else if (response.startsWith("203|Wrong_Answer")) {
+        } else if (response.startsWith("402|Wrong_Answer")) {
             chatArea.append("Server: Wrong Answer.\n\n");
             requestQuiz();
 
-        } else if (response.startsWith("204|Final_Score")) {
+        } else if (response.startsWith("501|Final_Score")) {
             chatArea.append("Server: Quiz finished. Final Score: " + response.split("\\|")[2] + "\n\n");
             submitButton.setEnabled(false);
             inputField.setEnabled(false);
@@ -194,6 +201,7 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // error message
     private void showError(String message, boolean exitOnClose) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
         if (exitOnClose) {
@@ -201,6 +209,7 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // listener for submit button
     private class SubmitAnswerListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -208,6 +217,7 @@ public class QuizClientGUI extends JFrame {
         }
     }
 
+    // main method launch client
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             QuizClientGUI clientGUI = new QuizClientGUI();

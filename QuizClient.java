@@ -2,88 +2,83 @@ import java.io.*;
 import java.net.*;
 
 public class QuizClient {
-    // Server address and port number for the connection
-    private static final String SERVER_ADDRESS = "192.168.1.10"; // 서버 IP
-    private static final int PORT = 7777;
+    private String serverAddress;
+    private int port;
 
-    // Socket, input and output streams for communication
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
 
-    // Constructor to establish the connection to the server
+    // constructor to initialize client and connect to server
     public QuizClient() throws IOException {
+        loadServerAddress();
         try {
-            // Create a socket to connect to the server at the specified address and port
-            socket = new Socket(SERVER_ADDRESS, PORT);
-
-            // Initialize the input stream to read data from the server
+            socket = new Socket(serverAddress, port);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            // Initialize the output stream to send data to the server
             out = new PrintWriter(socket.getOutputStream(), true);
-
-            System.out.println("Connected to the server at " + SERVER_ADDRESS + ":" + PORT);
+            System.out.println("Connected to the server at " + serverAddress + ":" + port);
         } catch (IOException e) {
-            System.err.println("Failed to connect to the server at " + SERVER_ADDRESS + ":" + PORT);
+            System.err.println("Failed to connect to the server at " + serverAddress + ":" + port);
             throw e;
         }
     }
 
-    // Method to send a connection request to the server
-    public String connectToServer() throws IOException {
-        // Send a message to the server to establish a connection
-        out.println("CONNECT|SERVER");
-        out.flush(); // Ensure data is sent immediately
-        System.out.println("Sent to server: CONNECT|SERVER");
+    // load server address and port from address.dat file
+    private void loadServerAddress() throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader("address.dat"))) {
+            serverAddress = br.readLine().trim();
+            port = Integer.parseInt(br.readLine().trim());
+            System.out.println("Loaded server address: " + serverAddress + ", port: " + port);
+        } catch (IOException e) {
+            System.err.println("Failed to load server address from address.dat");
+            throw e;
+        }
+    }
 
-        // Read and return the response from the server
+    // send connection request to server
+    public String connectToServer() throws IOException {
+        out.println("CONNECT|SERVER");
+        out.flush();
+        System.out.println("Sent to server: CONNECT|SERVER");
         String response = in.readLine();
         System.out.println("Received from server: " + response);
         return response;
     }
 
-    // Method to request a quiz from the server
+    // request quiz question from server
     public String requestQuiz() throws IOException {
-        // Send a request to the server for a quiz
         out.println("QUIZ|REQUEST");
         out.flush();
         System.out.println("Sent to server: QUIZ|REQUEST");
-
-        // Read and return the quiz question from the server
         String response = in.readLine();
         System.out.println("Received from server: " + response);
         return response;
     }
 
-    // Method to send the user's answer to the server
+    // send user answer to server
     public String sendAnswer(String userAnswer) throws IOException {
-        // Send the user's answer to the server
         out.println("ANSWER|" + userAnswer);
         out.flush();
         System.out.println("Sent to server: ANSWER|" + userAnswer);
-
-        // Read and return the server's response (correct or incorrect)
         String response = in.readLine();
         System.out.println("Received from server: " + response);
         return response;
     }
 
-    // Method to receive a response from the server (e.g., feedback or next
-    // question)
+    // receive a response from serer
     public String receiveResponse() throws IOException {
         String response = in.readLine();
         System.out.println("Received from server: " + response);
         return response;
     }
 
-    // Method to close the connection to the server
+    // close connection to server
     public void closeConnection() throws IOException {
         System.out.println("Closing connection to server...");
         socket.close();
     }
 
-    // Main method to test the connection
+    // main method launch client
     public static void main(String[] args) {
         try {
             QuizClient client = new QuizClient();

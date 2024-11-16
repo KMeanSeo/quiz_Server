@@ -10,18 +10,18 @@ public class QuizServerGUI extends JFrame {
     private Map<String, JLabel> clientScoreLabels;
     private Map<String, JLabel> clientProgressLabels;
 
+    // constructor to initialize GUI
     public QuizServerGUI(QuizServer server) {
         setTitle("Quiz Server");
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Initialize maps
         clientStatusLabels = new HashMap<>();
         clientScoreLabels = new HashMap<>();
         clientProgressLabels = new HashMap<>();
 
-        // Status area (Top)
+        // status area
         statusArea = new JTextArea();
         statusArea.setEditable(false);
         statusArea.setFont(new Font("Consolas", Font.PLAIN, 14));
@@ -39,7 +39,7 @@ public class QuizServerGUI extends JFrame {
         statusScrollPane.setPreferredSize(new Dimension(400, 200));
         add(statusScrollPane, BorderLayout.NORTH);
 
-        // Client panel (Center)
+        // client panel
         clientPanel = new JPanel(new GridBagLayout());
         clientPanel.setBackground(new Color(35, 35, 35));
         clientPanel.setBorder(BorderFactory.createTitledBorder(
@@ -53,7 +53,7 @@ public class QuizServerGUI extends JFrame {
         clientScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         add(clientScrollPane, BorderLayout.CENTER);
 
-        // Footer (Bottom)
+        // footer
         JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         footerPanel.setBackground(new Color(40, 40, 40));
         JLabel footerLabel = new JLabel("Quiz Server © 2024");
@@ -62,40 +62,36 @@ public class QuizServerGUI extends JFrame {
         footerPanel.add(footerLabel);
         add(footerPanel, BorderLayout.SOUTH);
 
-        // Set visibility
         setVisible(true);
     }
 
+    // add a new client to GUI
     public void addClient(String clientId, int totalQuestions) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(10, 10, 10, 10);
 
-        // Client ID
         JLabel idLabel = new JLabel("Client: " + clientId);
-        idLabel.setForeground(new Color(0, 191, 255)); // Cyan
+        idLabel.setForeground(new Color(0, 191, 255));
         idLabel.setFont(new Font("Arial", Font.BOLD, 12));
         gbc.gridx = 0;
         gbc.gridy = clientStatusLabels.size();
         clientPanel.add(idLabel, gbc);
 
-        // Client Status
         JLabel statusLabel = new JLabel("Connected");
         statusLabel.setForeground(Color.GREEN);
         clientStatusLabels.put(clientId, statusLabel);
         gbc.gridx = 1;
         clientPanel.add(statusLabel, gbc);
 
-        // Client Score
         JLabel scoreLabel = new JLabel("Score: 0");
         scoreLabel.setForeground(Color.LIGHT_GRAY);
         clientScoreLabels.put(clientId, scoreLabel);
         gbc.gridx = 2;
         clientPanel.add(scoreLabel, gbc);
 
-        // Client Progress
         JLabel progressLabel = new JLabel("Progress: 0/" + totalQuestions);
-        progressLabel.setForeground(new Color(255, 165, 0)); // Orange
+        progressLabel.setForeground(new Color(255, 165, 0));
         clientProgressLabels.put(clientId, progressLabel);
         gbc.gridx = 3;
         clientPanel.add(progressLabel, gbc);
@@ -103,6 +99,7 @@ public class QuizServerGUI extends JFrame {
         refreshClientPanel();
     }
 
+    // update client status in GUI
     public void updateClientStatus(String clientId, String status) {
         SwingUtilities.invokeLater(() -> {
             JLabel statusLabel = clientStatusLabels.get(clientId);
@@ -113,6 +110,7 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
+    // update client score in GUI
     public void updateClientScore(String clientId, int score) {
         SwingUtilities.invokeLater(() -> {
             JLabel scoreLabel = clientScoreLabels.get(clientId);
@@ -122,6 +120,7 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
+    // update client progress in GUI
     public void updateClientProgress(String clientId, int currentQuestion, int totalQuestions) {
         SwingUtilities.invokeLater(() -> {
             JLabel progressLabel = clientProgressLabels.get(clientId);
@@ -131,6 +130,7 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
+    // append status message to server log at GUI
     public void appendStatusMessage(String message) {
         SwingUtilities.invokeLater(() -> {
             statusArea.append(message + "\n");
@@ -138,6 +138,7 @@ public class QuizServerGUI extends JFrame {
         });
     }
 
+    // refreshes client panel at GUI
     public void refreshClientPanel() {
         SwingUtilities.invokeLater(() -> {
             clientPanel.revalidate();
